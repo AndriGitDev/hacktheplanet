@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACK THE PLANET</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <div class="panel" id="matrix-panel" style="grid-column: span 2;">
+            <canvas id="matrix-canvas"></canvas>
+        </div>
+        <div class="panel" id="hex-panel">
+            <div class="panel-header">&#x2588; HEX DUMP</div>
+            <div class="panel-content" id="hex-content"></div>
+        </div>
+        <div class="panel" id="terminal-panel">
+            <div class="panel-header">&#x2588; TERMINAL</div>
+            <div class="panel-content" id="terminal-content"></div>
+        </div>
+        <div class="panel" id="map-panel" style="grid-column: span 2;">
+            <div class="panel-header">&#x2588; GLOBAL NETWORK</div>
+            <canvas id="map-canvas"></canvas>
+        </div>
+        <div class="panel" id="alert-panel">
+            <div class="panel-header">&#x2588; ALERTS</div>
+            <div class="panel-content" id="alert-content"></div>
+        </div>
+        <div class="panel" id="progress-panel">
+            <div class="panel-header">&#x2588; OPERATIONS</div>
+            <div class="panel-content" id="progress-content"></div>
+        </div>
+        <div class="panel" id="network-panel">
+            <div class="panel-header">&#x2588; TOPOLOGY</div>
+            <canvas id="network-canvas"></canvas>
+        </div>
+    </div>
+    <div class="scanlines"></div>
+    <div id="alert-flash"></div>
+    <button id="audio-toggle" title="Toggle sound">&#x1f507;</button>
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+package main
+
+import (
+	"context"
+	"embed"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+)
+
+//go:embed static/*
+var staticFiles embed.FS
+
+const banner = `
+ ██╗  ██╗ █████╗  ██████╗██╗  ██╗  ████████╗██╗  ██╗███████╗
+ ██║  ██║██╔══██╗██╔════╝██║ ██╔╝  ╚══██╔══╝██║  ██║██╔════╝
+ ███████║███████║██║     █████╔╝      ██║   ███████║█████╗
+ ██╔══██║██╔══██║██║     ██╔═██╗      ██║   ██╔══██║██╔══╝
+ ██║  ██║██║  ██║╚██████╗██║  ██╗     ██║   ██║  ██║███████╗
+ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝     ╚═╝   ╚═╝  ╚═╝╚══════╝
+ ██████╗ ██╗      █████╗ ███╗   ██╗███████╗████████╗
+ ██╔══██╗██║     ██╔══██╗████╗  ██║██╔════╝╚══██╔══╝
+ ██████╔╝██║     ███████║██╔██╗ ██║█████╗     ██║
+ ██╔═══╝ ██║     ██╔══██║██║╚██╗██║██╔══╝     ██║
+ ██║     ███████╗██║  ██║██║ ╚████║███████╗   ██║
+ ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝
+`
+
+func main() {
+	port := flag.Int("port", 8080, "HTTP server port")
+	flag.Parse()
+
+	// Platforms like Railway set PORT env var
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		if p, err := strconv.Atoi(envPort); err == nil {
+			*port = p
+		}
+	}
+
+	fmt.Print(banner)
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	hub := newHub()
+	go runGenerators(ctx, hub)
+
+	srv := startServer(*port, staticFiles, hub)
+
+	log.Printf(">> SYSTEM ONLINE -- http://localhost:%d", *port)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Printf("server stopped: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println(">> SHUTTING DOWN...")
+	srv.Close()
+}
