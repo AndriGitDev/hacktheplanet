@@ -7,37 +7,50 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+    <div class="status-bar">
+        <div class="left">
+            <span class="title">HACKTHEPLANET v2.0</span>
+            <span class="status-indicator"><span class="status-dot"></span> CONNECTED</span>
+            <span class="status-indicator"><span class="status-dot amber"></span> ENCRYPTION ACTIVE</span>
+        </div>
+        <div class="right">
+            <span id="uptime">UPTIME: 00:00:00</span>
+            <span id="clock"></span>
+        </div>
+    </div>
     <div class="dashboard">
-        <div class="panel" id="matrix-panel" style="grid-column: span 2;">
+        <div class="panel" id="matrix-panel">
             <canvas id="matrix-canvas"></canvas>
         </div>
         <div class="panel" id="hex-panel">
-            <div class="panel-header">&#x2588; HEX DUMP</div>
+            <div class="panel-header"><span class="dot"></span> HEX DUMP</div>
             <div class="panel-content" id="hex-content"></div>
         </div>
+        <div class="panel" id="network-panel">
+            <div class="panel-header"><span class="dot"></span> NETWORK TOPOLOGY</div>
+            <canvas id="network-canvas"></canvas>
+        </div>
         <div class="panel" id="terminal-panel">
-            <div class="panel-header">&#x2588; TERMINAL</div>
+            <div class="panel-header"><span class="dot"></span> TERMINAL</div>
             <div class="panel-content" id="terminal-content"></div>
         </div>
-        <div class="panel" id="map-panel" style="grid-column: span 2;">
-            <div class="panel-header">&#x2588; GLOBAL NETWORK</div>
+        <div class="panel" id="map-panel">
+            <div class="panel-header"><span class="dot"></span> GLOBAL OPERATIONS</div>
             <canvas id="map-canvas"></canvas>
         </div>
         <div class="panel" id="alert-panel">
-            <div class="panel-header">&#x2588; ALERTS</div>
+            <div class="panel-header"><span class="dot"></span> SYSTEM ALERTS</div>
             <div class="panel-content" id="alert-content"></div>
         </div>
         <div class="panel" id="progress-panel">
-            <div class="panel-header">&#x2588; OPERATIONS</div>
+            <div class="panel-header"><span class="dot"></span> ACTIVE OPERATIONS</div>
             <div class="panel-content" id="progress-content"></div>
-        </div>
-        <div class="panel" id="network-panel">
-            <div class="panel-header">&#x2588; TOPOLOGY</div>
-            <canvas id="network-canvas"></canvas>
         </div>
     </div>
     <div class="scanlines"></div>
+    <div class="vignette"></div>
     <div id="alert-flash"></div>
+    <button id="hack-btn">HACK THE PLANET<span class="btn-sub">CLICK TO INITIATE BREACH</span></button>
     <button id="audio-toggle" title="Toggle sound">&#x1f507;</button>
     <script type="module" src="/js/main.js"></script>
 </body>

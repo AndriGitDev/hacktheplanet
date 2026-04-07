@@ -8,7 +8,7 @@ export function initHexDump(container) {
         line.className = 'hex-line';
         line.innerHTML =
             '<span class="hex-offset">' + data.offset + '</span>  ' +
-            data.hex +
+            '<span class="hex-bytes">' + data.hex + '</span>' +
             '<span class="hex-ascii">' + escapeHtml(data.ascii) + '</span>';
         container.appendChild(line);
         lineCount++;

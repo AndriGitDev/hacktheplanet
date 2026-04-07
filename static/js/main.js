@@ -6,6 +6,7 @@ import { initProgress } from './progress.js';
 import { initWorldMap } from './worldmap.js';
 import { initNetwork } from './network.js';
 import * as audio from './audio.js';
+import { startHackSequence } from './hack.js';
 
 // Init all panels
 initMatrix(document.getElementById('matrix-canvas'));
@@ -20,6 +21,37 @@ const onProgress = initProgress(document.getElementById('progress-content'));
 const onMapConnection = initWorldMap(document.getElementById('map-canvas'));
 const onNodePulse = initNetwork(document.getElementById('network-canvas'));
 
+// Clock and uptime
+const clockEl = document.getElementById('clock');
+const uptimeEl = document.getElementById('uptime');
+const startTime = Date.now();
+
+function updateClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: false }) + '.' +
+        String(now.getMilliseconds()).padStart(3, '0').slice(0, 2);
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    uptimeEl.textContent = 'UPTIME: ' + h + ':' + m + ':' + s;
+}
+setInterval(updateClock, 50);
+updateClock();
+
+// Hack button
+const hackBtn = document.getElementById('hack-btn');
+let hacking = false;
+hackBtn.addEventListener('click', () => {
+    if (hacking) return;
+    hacking = true;
+    hackBtn.style.display = 'none';
+    startHackSequence(() => {
+        hacking = false;
+        hackBtn.style.display = '';
+    });
+});
+
 // Audio toggle
 const audioBtn = document.getElementById('audio-toggle');
 audioBtn.addEventListener('click', () => {
@@ -30,6 +62,7 @@ audioBtn.addEventListener('click', () => {
 // WebSocket connection with reconnect
 let ws;
 let reconnectDelay = 1000;
+const statusDots = document.querySelectorAll('.status-dot');
 
 function connect() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -44,10 +77,10 @@ function connect() {
         switch (msg.type) {
             case 'hex':
                 onHex(msg.data);
-                audio.keyclick();
                 break;
             case 'terminal':
                 onTerminal(msg.data);
+                audio.keyclick();
                 break;
             case 'alert':
                 onAlert(msg.data);
