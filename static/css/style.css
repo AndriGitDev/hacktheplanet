@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
 
 :root {
-    --bg: #060a0f;
+    --bg: #05070b;
     --panel-bg: #0a0f16;
     --panel-bg-grad: linear-gradient(180deg, #0c1219 0%, #080d13 100%);
     --border: #0f2b1a;
@@ -15,18 +15,49 @@
     --text-white: #e0ffe0;
     --glow-green: rgba(0, 255, 65, 0.4);
     --glow-cyan: rgba(0, 229, 255, 0.4);
+    --glow-magenta: rgba(255, 0, 149, 0.3);
     --font-mono: 'Share Tech Mono', 'Courier New', 'Consolas', monospace;
+    --font-terminal: 'VT323', monospace;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background: var(--bg);
+    background:
+        radial-gradient(circle at 14% 12%, rgba(255, 0, 149, 0.12), transparent 30%),
+        radial-gradient(circle at 86% 18%, rgba(0, 229, 255, 0.12), transparent 34%),
+        linear-gradient(135deg, #030509 0%, #090c13 40%, #05070b 100%);
     color: var(--text-green);
     font-family: var(--font-mono);
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    text-transform: uppercase;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -2;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.35;
+}
+
+.boot-watermark {
+    position: fixed;
+    top: 34px;
+    left: 12px;
+    z-index: 12000;
+    letter-spacing: 2px;
+    font-size: 10px;
+    color: rgba(0, 229, 255, 0.65);
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+    animation: watermarkBlink 4.5s steps(1) infinite;
 }
 
 /* --- STATUS BAR --- */
@@ -36,11 +67,11 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 12px;
-    background: linear-gradient(90deg, rgba(0,255,65,0.03) 0%, rgba(0,255,65,0.08) 50%, rgba(0,255,65,0.03) 100%);
-    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(7, 18, 23, 0.8) 0%, rgba(12, 31, 19, 0.95) 42%, rgba(30, 7, 25, 0.85) 100%);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.25);
     font-size: 10px;
     letter-spacing: 1.5px;
-    color: var(--text-dim);
+    color: rgba(0, 255, 65, 0.55);
     flex-shrink: 0;
     position: relative;
     overflow: hidden;
@@ -86,17 +117,20 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr 1.2fr;
     grid-template-rows: 1.2fr 1fr 0.8fr;
-    gap: 2px;
+    gap: 8px;
     height: calc(100vh - 28px);
     width: 100vw;
-    padding: 2px;
+    padding: 8px;
     animation: flicker 12s infinite;
 }
 
 /* --- PANELS --- */
 .panel {
-    background: var(--panel-bg-grad);
-    border: 1px solid var(--border);
+    background:
+        linear-gradient(140deg, rgba(255, 0, 149, 0.035), transparent 28%),
+        linear-gradient(35deg, rgba(0, 229, 255, 0.04), transparent 30%),
+        var(--panel-bg-grad);
+    border: 1px solid rgba(0, 255, 65, 0.22);
     border-radius: 3px;
     overflow: hidden;
     position: relative;
@@ -105,6 +139,10 @@ body {
     min-width: 0;
     min-height: 0;
     animation: panelGlow 4s ease-in-out infinite;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+        0 0 18px rgba(0, 255, 65, 0.06),
+        0 0 24px rgba(255, 0, 149, 0.05);
 }
 .panel::before {
     content: '';
@@ -119,13 +157,13 @@ body {
 }
 
 .panel-header {
-    background: linear-gradient(90deg, rgba(0,255,65,0.1) 0%, rgba(0,255,65,0.03) 100%);
-    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(0,255,65,0.14) 0%, rgba(0,229,255,0.09) 35%, rgba(255,0,149,0.1) 100%);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.25);
     padding: 4px 10px;
     font-size: 9px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: var(--text-dim);
+    color: rgba(201, 255, 211, 0.75);
     flex-shrink: 0;
     white-space: nowrap;
     position: relative;
@@ -157,9 +195,11 @@ body {
     flex: 1;
     overflow: hidden;
     padding: 5px 8px;
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.4;
     position: relative;
+    font-family: var(--font-terminal);
+    letter-spacing: 1px;
 }
 
 .panel canvas {
@@ -361,11 +401,12 @@ body {
     z-index: 9999;
     background: repeating-linear-gradient(
         0deg,
-        rgba(0, 0, 0, 0.08) 0px,
-        rgba(0, 0, 0, 0.08) 1px,
+        rgba(0, 0, 0, 0.12) 0px,
+        rgba(0, 0, 0, 0.12) 1px,
         transparent 1px,
         transparent 2px
     );
+    mix-blend-mode: multiply;
 }
 
 /* --- VIGNETTE --- */
@@ -374,7 +415,7 @@ body {
     inset: 0;
     pointer-events: none;
     z-index: 9997;
-    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.7) 100%);
 }
 
 /* --- AUDIO TOGGLE --- */
@@ -472,17 +513,21 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10001;
-    background: rgba(6, 10, 15, 0.92);
+    background: linear-gradient(180deg, rgba(8, 16, 22, 0.97) 0%, rgba(5, 8, 13, 0.97) 100%);
     border: 2px solid var(--text-green);
     color: var(--text-green);
     font-family: var(--font-mono);
-    font-size: 20px;
+    font-size: clamp(18px, 2.5vw, 28px);
     letter-spacing: 8px;
     padding: 20px 50px;
     cursor: pointer;
     text-transform: uppercase;
     text-shadow: 0 0 15px var(--text-green), 0 0 30px rgba(0, 255, 65, 0.3);
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.15), 0 0 40px rgba(0, 255, 65, 0.08), inset 0 0 30px rgba(0, 255, 65, 0.05);
+    box-shadow:
+        0 0 22px rgba(0, 255, 65, 0.18),
+        0 0 46px rgba(0, 255, 65, 0.09),
+        inset 0 0 24px rgba(0, 255, 65, 0.08),
+        inset 0 0 40px rgba(255, 0, 149, 0.08);
     transition: all 0.3s;
     animation: hackBtnPulse 2s ease-in-out infinite;
 }
@@ -498,14 +543,14 @@ body {
 }
 #hack-btn::after {
     inset: -12px;
-    border-color: rgba(0, 255, 65, 0.1);
+    border-color: rgba(0, 229, 255, 0.25);
 }
 #hack-btn:hover {
-    background: rgba(0, 255, 65, 0.12);
+    background: linear-gradient(180deg, rgba(0, 255, 65, 0.16) 0%, rgba(0, 229, 255, 0.08) 100%);
     box-shadow: 0 0 40px rgba(0, 255, 65, 0.4), 0 0 80px rgba(0, 255, 65, 0.15), inset 0 0 40px rgba(0, 255, 65, 0.08);
     text-shadow: 0 0 20px var(--text-green), 0 0 40px var(--text-green);
     transform: translate(-50%, -50%) scale(1.05);
-    border-color: #50ff80;
+    border-color: #71ffd2;
 }
 #hack-btn:active {
     transform: translate(-50%, -50%) scale(0.98);
@@ -515,9 +560,14 @@ body {
     display: block;
     font-size: 8px;
     letter-spacing: 3px;
-    color: rgba(0, 255, 65, 0.5);
+    color: rgba(0, 229, 255, 0.75);
     margin-top: 8px;
     text-shadow: none;
+}
+
+@keyframes watermarkBlink {
+    0%, 79%, 82%, 100% { opacity: 0.75; }
+    80%, 81% { opacity: 0.2; }
 }
 
 @keyframes hackBtnPulse {
