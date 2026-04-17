@@ -1,6 +1,8 @@
 // Full-screen cinematic hacking sequence
 // All styling is inline — no external CSS dependency
 
+import { createHack3D } from './hack3d.js';
+
 const PHASES = [
     {
         name: 'INIT', duration: 4000, color: '#00ff41', bgEffect: 'grid',
@@ -132,8 +134,19 @@ function _runHackSequence(onComplete) {
     });
 
     const cvs = document.createElement('canvas');
-    Object.assign(cvs.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' });
+    Object.assign(cvs.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', zIndex: '1', pointerEvents: 'none' });
     overlay.appendChild(cvs);
+
+    // 3D scene layer — sits below the 2D overlay canvas so particles still render on top
+    let hack3d = null;
+    createHack3D(overlay)
+        .then(h => {
+            hack3d = h;
+            // If a phase was already set before 3D finished loading, apply it now
+            if (currentPhaseName) hack3d.setScene(currentPhaseName);
+        })
+        .catch(e => console.warn('3D layer failed to load, falling back to 2D:', e));
+    let currentPhaseName = null;
 
     const terminal = document.createElement('div');
     Object.assign(terminal.style, {
@@ -208,11 +221,19 @@ function _runHackSequence(onComplete) {
     function drawBg() {
         if (!running) return;
         bgFrame++;
-        ctx.fillStyle = 'rgba(6,10,15,0.15)';
-        ctx.fillRect(0, 0, w, h);
+        // When 3D is active we keep the 2D canvas mostly transparent so the 3D shows through.
+        // Fade existing 2D content out each frame instead of painting the dark background on top.
+        if (hack3d) {
+            ctx.clearRect(0, 0, w, h);
+        } else {
+            ctx.fillStyle = 'rgba(6,10,15,0.15)';
+            ctx.fillRect(0, 0, w, h);
+        }
         if (shaking) { ctx.save(); ctx.translate((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8); }
 
-        if (currentBg === 'grid' || currentBg === 'fade') {
+        if (hack3d) {
+            // 3D scene provides backgrounds — skip redundant 2D decor
+        } else if (currentBg === 'grid' || currentBg === 'fade') {
             ctx.strokeStyle = 'rgba(0,255,65,0.04)';
             ctx.lineWidth = 0.5;
             const sp = 40, off = (bgFrame * 0.5) % sp;
@@ -316,6 +337,8 @@ function _runHackSequence(onComplete) {
         shaking = !!phase.shake;
         phaseName.textContent = `[${idx + 1}/${PHASES.length}] ${phase.name}`;
         phaseName.style.color = phase.color;
+        currentPhaseName = phase.name;
+        if (hack3d) hack3d.setScene(phase.name);
 
         if (phase.bar) {
             barContainer.style.display = 'block';
@@ -333,10 +356,17 @@ function _runHackSequence(onComplete) {
             waits.push(new Promise(resolve => {
                 setTimeout(async () => {
                     try {
-                        if (ld.special === 'vulnerability') { showBig('VULNERABILITY FOUND', '#ff0040', 2000); tone(200, 0.5, 0.12, 'sawtooth'); burst(w / 2, h / 2, 30, 255, 0, 64); }
-                        else if (ld.special === 'alarm') { showBig('!! DETECTED !!', '#ff0040', 2500); for (let j = 0; j < 6; j++) setTimeout(() => tone(j % 2 ? 880 : 440, 0.15, 0.12, 'sawtooth'), j * 150); burst(w / 2, h / 2, 50, 255, 0, 64); }
+                        if (ld.special === 'vulnerability') { showBig('VULNERABILITY FOUND', '#ff0040', 2000); tone(200, 0.5, 0.12, 'sawtooth'); burst(w / 2, h / 2, 30, 255, 0, 64); if (hack3d) { hack3d.event('vuln'); hack3d.shake(0.4); } }
+                        else if (ld.special === 'alarm') { showBig('!! DETECTED !!', '#ff0040', 2500); for (let j = 0; j < 6; j++) setTimeout(() => tone(j % 2 ? 880 : 440, 0.15, 0.12, 'sawtooth'), j * 150); burst(w / 2, h / 2, 50, 255, 0, 64); if (hack3d) hack3d.shake(0.8); }
                         else if (ld.special === 'complete') { showBig('HACK COMPLETE', '#00ff41', 3000); tone(523, 0.15, 0.1); setTimeout(() => tone(659, 0.15, 0.1), 150); setTimeout(() => tone(784, 0.3, 0.12), 300); burst(w / 2, h / 2, 80, 0, 255, 65); }
                         else {
+                            // Trigger 3D events based on line content
+                            if (hack3d) {
+                                if (ld.text.includes('BYPASSED')) { hack3d.event('bypass'); hack3d.shake(0.3); }
+                                else if (ld.text.includes('BUFFER OVERFLOW')) { hack3d.event('overflow'); hack3d.shake(0.5); }
+                                else if (ld.text.startsWith('> Downloading:')) hack3d.event('file');
+                                else if (ld.text.includes('DEPLOYING COUNTERMEASURES')) hack3d.event('scatter');
+                            }
                             const style = ld.text.includes('[OK]') || ld.text.includes('BYPASSED') || ld.text.includes('ACHIEVED') || ld.text.includes('COMPLETE') || ld.text.includes('NEUTRALIZED') || ld.text.includes('ELIMINATED') || ld.text === '  root'
                                 ? `color:${phase.color};text-shadow:0 0 10px ${phase.color};font-weight:bold` : '';
                             const line = document.createElement('div');
@@ -418,6 +448,7 @@ function _runHackSequence(onComplete) {
             console.error('Sequence error:', e);
         } finally {
             running = false;
+            if (hack3d) try { hack3d.dispose(); } catch (e) {}
             overlay.remove();
             window.removeEventListener('resize', onResize);
             if (audioCtx) try { audioCtx.close(); } catch (e) {}
