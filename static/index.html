@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HACK THE PLANET</title>
+    <title>Hack the Planet by Kastro Labs</title>
+    <meta name="description" content="A harmless Hollywood hacker simulator by Kastro Labs. Toy interface. No real targets. No hacking.">
+    <meta name="theme-color" content="#05070b">
+    <meta property="og:title" content="Hack the Planet by Kastro Labs">
+    <meta property="og:description" content="A harmless Hollywood hacker simulator. It does not hack anything.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://htp.kastro.is">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Hack the Planet by Kastro Labs">
+    <meta name="twitter:description" content="Toy interface. No real targets. No hacking. Pure mainframe vibes.">
+    <link rel="canonical" href="https://htp.kastro.is">
     <link rel="stylesheet" href="/css/style.css">
     <script type="importmap">
     {
@@ -13,57 +23,114 @@
     }
     </script>
 </head>
-<body>
-    <div class="boot-watermark">DIAL-UP UPLINK / VHS FEED / SATELLITE RELAY</div>
-    <button id="hack-btn">
-        HACK THE PLANET
-        <span class="btn-sub">CLICK TO INITIATE BREACH</span>
-    </button>
+<body data-theme="vhs">
+    <div class="boot-watermark">KASTRO LABS // TOY INTERFACE // NO REAL TARGETS</div>
+    <div class="labs-mark" aria-label="Kastro Labs brand mark">
+        <span class="labs-k">K</span>
+        <span><strong>Kastro Labs</strong><em>Harmless simulator</em></span>
+    </div>
+
+    <section class="hero-console" aria-labelledby="hero-title">
+        <p class="eyebrow">Hollywood hacker mode · zero actual hacking</p>
+        <h1 id="hero-title">Hack the Planet</h1>
+        <p class="hero-copy">A cinematic toy cockpit for dramatic terminals, fake plot firewalls, synth blips, and “open this before the security meeting” energy.</p>
+        <label class="codename-field" for="codename-input">
+            <span>Operation codename</span>
+            <input id="codename-input" maxlength="28" autocomplete="off" spellcheck="false" value="NO-PACKETS-HARMED">
+        </label>
+        <div class="hero-actions">
+            <button id="hack-btn">
+                Start cinematic simulation
+                <span class="btn-sub">No breach. No target. Just vibes.</span>
+            </button>
+            <button id="screenshot-mode" class="utility-btn" type="button">Screenshot mode</button>
+            <button id="boss-mode" class="utility-btn danger" type="button">Boss mode</button>
+            <button id="about-toggle" class="utility-btn" type="button">About this toy</button>
+        </div>
+        <p class="safety-pill">Toy interface. No real targets. No hacking. No packets were harmed.</p>
+    </section>
 
     <div class="status-bar">
         <div class="left">
-            <span class="title">HACKTHEPLANET v3.2</span>
-            <span class="status-indicator"><span class="status-dot"></span> CONNECTED</span>
-            <span class="status-indicator"><span class="status-dot amber"></span> ENCRYPTION ACTIVE</span>
+            <span class="title">HACK THE PLANET · KASTRO LABS</span>
+            <span class="status-indicator"><span class="status-dot"></span> SIMULATION LIVE</span>
+            <span class="status-indicator"><span class="status-dot amber"></span> MOVIE LOGIC ACTIVE</span>
+            <span class="status-indicator mobile-hide">htp.kastro.is · harmless simulator</span>
         </div>
         <div class="right">
             <span id="uptime">UPTIME: 00:00:00</span>
             <span id="clock"></span>
         </div>
     </div>
-    <div class="dashboard">
+
+    <div class="dashboard" aria-label="Cinematic hacker simulator dashboard">
         <div class="panel" id="matrix-panel">
+            <div class="panel-header"><span class="dot"></span> RAIN ROOM</div>
             <canvas id="matrix-canvas"></canvas>
         </div>
         <div class="panel" id="hex-panel">
-            <div class="panel-header"><span class="dot"></span> HEX DUMP</div>
+            <div class="panel-header"><span class="dot"></span> MOVIE HEX CONFETTI</div>
             <div class="panel-content" id="hex-content"></div>
         </div>
         <div class="panel" id="network-panel">
-            <div class="panel-header"><span class="dot"></span> NETWORK TOPOLOGY</div>
+            <div class="panel-header"><span class="dot"></span> FICTIONAL PLOT NODES</div>
             <canvas id="network-canvas"></canvas>
         </div>
         <div class="panel" id="terminal-panel">
-            <div class="panel-header"><span class="dot"></span> TERMINAL</div>
+            <div class="panel-header"><span class="dot"></span> DRAMATIC TERMINAL</div>
             <div class="panel-content" id="terminal-content"></div>
         </div>
         <div class="panel" id="map-panel">
-            <div class="panel-header"><span class="dot"></span> GLOBAL OPERATIONS</div>
+            <div class="panel-header"><span class="dot"></span> SATELLITE VIBES MAP</div>
             <canvas id="map-canvas"></canvas>
         </div>
         <div class="panel" id="alert-panel">
-            <div class="panel-header"><span class="dot"></span> SYSTEM ALERTS</div>
+            <div class="panel-header"><span class="dot"></span> PLOT ALERTS</div>
             <div class="panel-content" id="alert-content"></div>
         </div>
         <div class="panel" id="progress-panel">
-            <div class="panel-header"><span class="dot"></span> ACTIVE OPERATIONS</div>
+            <div class="panel-header"><span class="dot"></span> CINEMATIC CHECKLIST</div>
             <div class="panel-content" id="progress-content"></div>
         </div>
     </div>
+
+    <aside class="theme-dock" aria-label="Theme controls">
+        <button class="theme-chip active" data-theme-choice="vhs" type="button">VHS green</button>
+        <button class="theme-chip" data-theme-choice="amber" type="button">Cyber amber</button>
+        <button class="theme-chip" data-theme-choice="noir" type="button">Nordic noir</button>
+        <button class="theme-chip" data-theme-choice="kastro" type="button">Kastro yellow</button>
+    </aside>
+
+    <div id="achievement-stack" class="achievement-stack" aria-live="polite"></div>
+
+    <dialog id="about-modal" class="about-modal">
+        <form method="dialog">
+            <button class="modal-close" aria-label="Close">×</button>
+        </form>
+        <p class="eyebrow">About this toy</p>
+        <h2>It feels illegal. It is not.</h2>
+        <p>Hack the Planet by Kastro Labs is a harmless Hollywood-hacker simulator. It renders fake terminals, fake map hops, fake alerts, and fake progress bars locally for entertainment.</p>
+        <p><strong>It does not scan, exploit, exfiltrate, evade detection, or target anything.</strong> The WebSocket only streams fictional dashboard noise from this server.</p>
+        <a href="https://kastro.is/en/labs/hack-the-planet" rel="noopener">Back to the Kastro Labs page</a>
+    </dialog>
+
+    <div id="share-overlay" class="share-overlay" hidden>
+        <strong>Hack the Planet by Kastro Labs</strong>
+        <span>Toy interface. No real targets. No packets were harmed.</span>
+    </div>
+
+    <main id="boss-screen" class="boss-screen" hidden>
+        <p class="eyebrow">Quarterly Infrastructure Hygiene Report</p>
+        <h2>Nothing to see here.</h2>
+        <p>We are reviewing patch cadences, DNS hygiene, vendor lock-in exposure, and whether the coffee machine counts as shadow IT.</p>
+        <p class="boss-disclaimer">Harmless simulator. No real targets. No hacking.</p>
+        <button id="exit-boss" class="utility-btn" type="button">Return to mainframe vibes</button>
+    </main>
+
     <div class="scanlines"></div>
     <div class="vignette"></div>
     <div id="alert-flash"></div>
-    <button id="audio-toggle" title="Toggle sound">&#x1f507;</button>
+    <button id="audio-toggle" title="Toggle sound" aria-label="Toggle sound">&#x1f507;</button>
     <script type="module" src="/js/main.js"></script>
 </body>
 </html>

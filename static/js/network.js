@@ -1,14 +1,14 @@
 const NODE_DEFS = [
-    { id: 'node-0', name: 'NSA-RELAY-7' },
-    { id: 'node-1', name: 'DARKNET-PROXY-3' },
-    { id: 'node-2', name: 'TOR-EXIT-12' },
-    { id: 'node-3', name: 'BOTNET-C2-ALPHA' },
-    { id: 'node-4', name: 'SATCOM-UPLINK-9' },
-    { id: 'node-5', name: 'MAINFRAME-CORE' },
-    { id: 'node-6', name: 'GCHQ-NODE-4' },
-    { id: 'node-7', name: 'PENTAGON-DMZ' },
-    { id: 'node-8', name: 'ECHELON-TAP-2' },
-    { id: 'node-9', name: 'SHADOW-NET-6' },
+    { id: 'node-0', name: 'KASTRO-LABS' },
+    { id: 'node-1', name: 'PLOT-FIREWALL' },
+    { id: 'node-2', name: 'COFFEE-RELAY' },
+    { id: 'node-3', name: 'VHS-TRACKING' },
+    { id: 'node-4', name: 'SATELLITE-VIBES' },
+    { id: 'node-5', name: 'MAINFRAME-AURA' },
+    { id: 'node-6', name: 'BOSS-MODE' },
+    { id: 'node-7', name: 'NO-PACKETS-HARMED' },
+    { id: 'node-8', name: 'DRAMATIC-TERMINAL' },
+    { id: 'node-9', name: 'SCREENSHOT-BAIT' },
 ];
 
 const EDGES = [

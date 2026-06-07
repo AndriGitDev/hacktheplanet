@@ -568,13 +568,12 @@ export async function createHack3D(container) {
     window.addEventListener('resize', onResize);
 
     const factories = {
-        INIT:      () => initScene(land),
-        SCAN:      () => scanScene(),
-        EXPLOIT:   () => exploitScene(),
-        FIREWALL:  () => firewallScene(),
-        EXFILTRATE:() => exfilScene(),
-        DETECTED:  () => detectedScene(land),
-        CLEANUP:   () => cleanupScene(),
+        BOOT:          () => initScene(land),
+        DIALUP:        () => scanScene(),
+        'PLOT FIREWALL': () => firewallScene(),
+        MAINFRAME:     () => exploitScene(),
+        'CHAOS MONTAGE': () => exfilScene(),
+        'END CARD':    () => cleanupScene(),
     };
 
     let active = null;

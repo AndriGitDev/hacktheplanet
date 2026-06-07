@@ -7,6 +7,7 @@ import { initWorldMap } from './worldmap.js';
 import { initNetwork } from './network.js';
 import * as audio from './audio.js';
 import { startHackSequence } from './hack.js';
+import { setupExperience } from './experience.js';
 
 // Init all panels
 initMatrix(document.getElementById('matrix-canvas'));
@@ -39,17 +40,18 @@ function updateClock() {
 setInterval(updateClock, 50);
 updateClock();
 
-// Hack button
-const hackBtn = document.getElementById('hack-btn');
+// Experience controls
 let hacking = false;
-hackBtn.addEventListener('click', () => {
-    if (hacking) return;
-    hacking = true;
-    hackBtn.style.display = 'none';
-    startHackSequence(() => {
-        hacking = false;
-        hackBtn.style.display = '';
-    });
+const experience = setupExperience({
+    onStart: ({ codename, theme }) => {
+        if (hacking) return;
+        hacking = true;
+        experience.setRunning(true);
+        startHackSequence(() => {
+            hacking = false;
+            experience.setRunning(false);
+        }, { codename, theme });
+    },
 });
 
 // Audio toggle
