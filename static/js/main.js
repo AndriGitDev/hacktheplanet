@@ -8,6 +8,7 @@ import { initNetwork } from './network.js';
 import * as audio from './audio.js';
 import { startHackSequence } from './hack.js';
 import { setupExperience } from './experience.js';
+import { initSpectacle } from './spectacle.js';
 
 // Init all panels
 initMatrix(document.getElementById('matrix-canvas'));
@@ -21,6 +22,10 @@ const onAlert = initAlerts(
 const onProgress = initProgress(document.getElementById('progress-content'));
 const onMapConnection = initWorldMap(document.getElementById('map-canvas'));
 const onNodePulse = initNetwork(document.getElementById('network-canvas'));
+const spectacle = initSpectacle(document.getElementById('spectacle-canvas'), {
+    firewallMeter: document.getElementById('plot-firewall-meter'),
+    vibeMeter: document.getElementById('vibe-pressure-meter'),
+});
 
 // Clock and uptime
 const clockEl = document.getElementById('clock');
@@ -51,7 +56,9 @@ const experience = setupExperience({
             hacking = false;
             experience.setRunning(false);
         }, { codename, theme });
+        spectacle.pulse();
     },
+    onWow: () => spectacle.pulse(),
 });
 
 // Audio toggle

@@ -15,7 +15,7 @@ function slugCodename(value) {
         .slice(0, 28) || 'NO-PACKETS-HARMED';
 }
 
-export function setupExperience({ onStart }) {
+export function setupExperience({ onStart, onWow }) {
     const body = document.body;
     const hackBtn = document.getElementById('hack-btn');
     const copyShareBtn = document.getElementById('copy-share');
@@ -155,6 +155,10 @@ export function setupExperience({ onStart }) {
         }
         if (event.key.toLowerCase() === 'c') copyShareLink();
         if (event.key.toLowerCase() === 's') screenshotBtn.click();
+        if (event.key.toLowerCase() === 'w') {
+            onWow?.();
+            toast('start');
+        }
         if (event.key === 'Escape') {
             bossScreen.hidden = true;
             bossBtn.setAttribute('aria-pressed', 'false');
