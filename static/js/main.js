@@ -9,93 +9,78 @@
     const ackCheck = $('#ack-check');
     const enterButton = $('#enter-app');
     const aboutButton = $('#about-btn');
-    const runButton = $('#run-cycle');
-    const assetList = $('#asset-list');
-    const findingsEl = $('#findings');
-    const timelineEl = $('#timeline');
-    const trafficRate = $('#traffic-rate');
-    const confidenceEl = $('#confidence');
-    const riskScore = $('#risk-score');
+    const hackButton = $('#hack-target');
+    const toolSwarm = $('#tool-swarm');
+    const crackFill = $('#crack-fill');
+    const crackPercent = $('#crack-percent');
+    const hashRain = $('#hash-rain');
+    const scenarioSteps = $('#scenario-steps');
+    const toolLoad = $('#tool-load');
     const toastStack = $('#toast-stack');
+    const breachOverlay = $('#breach-overlay');
+    const closeBreach = $('#close-breach');
 
-    const assets = [
-        { host: 'edge-01.example-corp.test', ip: '192.0.2.14', role: 'CDN terminator', ports: '443/tcp, 80/tcp', note: 'HSTS present, certificate expires in 37 days.', tag: 'web' },
-        { host: 'vpn-gw.example-corp.test', ip: '198.51.100.22', role: 'remote access gateway', ports: '443/tcp', note: 'MFA policy simulated as enabled; posture check pending.', tag: 'identity' },
-        { host: 'mail-relay.example-corp.test', ip: '203.0.113.19', role: 'mail edge', ports: '25/tcp, 587/tcp', note: 'SPF aligned; DMARC simulated at p=quarantine.', tag: 'mail' },
-        { host: 'grafana.ops.example-corp.test', ip: '192.0.2.88', role: 'observability', ports: '443/tcp', note: 'Login page fingerprint resembles Grafana 10.x.', tag: 'ops' },
-        { host: 'build-cache.example-corp.test', ip: '198.51.100.71', role: 'CI cache', ports: '443/tcp, 22/tcp', note: 'SSH banner intentionally redacted in this toy.', tag: 'ci' },
+    const tools = [
+        { name: 'passive-dns', detail: 'correlating fixture-only DNS history', status: 'RUN', progress: 34 },
+        { name: 'subfinder-sim', detail: 'enumerating seeded subdomains', status: 'RUN', progress: 48 },
+        { name: 'httpx-theatre', detail: 'replaying synthetic header probes', status: 'RUN', progress: 61 },
+        { name: 'tls-scry', detail: 'parsing fake certificate chain', status: 'RUN', progress: 76 },
+        { name: 'dirb-mime', detail: 'testing local wordlist against fixture paths', status: 'RUN', progress: 29 },
+        { name: 'log-shard', detail: 'tailing generated app logs', status: 'RUN', progress: 54 },
+        { name: 'hashcat-stage', detail: 'cracking toy hashes in animation only', status: 'HOT', progress: 68 },
+        { name: 'loot-vault', detail: 'staging fake evidence receipts', status: 'IDLE', progress: 12 },
     ];
 
-    const findings = [
-        { severity: 'med', title: 'Certificate rotation window is narrow', body: 'edge-01 certificate chain has 37 simulated days remaining. Realistic operational risk, fake evidence.', evidence: 'x509.not_after = 2026-07-14T09:22:11Z' },
-        { severity: 'low', title: 'Security headers mostly present', body: 'CSP, HSTS, X-Content-Type-Options observed in generated response set. Frame policy missing in one fake sample.', evidence: 'response[3].headers.frame-ancestors = null' },
-        { severity: 'med', title: 'Legacy SSH exposure needs owner review', body: 'build-cache shows a fictional SSH service. No connection was attempted; this is rendered from seed data.', evidence: 'asset.port = 22/tcp / source = local fixture' },
-        { severity: 'high', title: 'Demo secret detected and immediately invalidated', body: 'A fake token pattern appeared in a synthetic log line. It is not a credential and has no system behind it.', evidence: 'token = htp_demo_[redacted]_fixture' },
+    const scenario = [
+        'Load authorised fictional scope and safety interlocks.',
+        'Run passive reconnaissance from local fixtures.',
+        'Identify stale admin panel and weak demo password policy.',
+        'Stage password-cracker theatre against fake hash material.',
+        'Simulate web session capture and privilege escalation.',
+        'Generate fictional loot manifest and defensive remediation notes.',
+        'Burn access, close session, and confirm no real systems were touched.',
     ];
 
-    const timeline = [
-        '00:00 Scope loaded from local fixture: example-corp.test and RFC 5737 address space only.',
-        '00:03 Passive DNS corpus generated. No resolver queries were sent.',
-        '00:08 HTTP response samples replayed from deterministic simulator state.',
-        '00:13 TLS chain inspected from fake certificate objects.',
-        '00:21 Findings normalized into analyst queue.',
-        '00:34 Operator note: app is theatrical, but workflow mirrors real triage language.',
+    const fakeHashes = [
+        '8f14e45fceea167a5a36dedd4bea2543',
+        'c9f0f895fb98ab9159f51fd0297e236d',
+        '45c48cce2e2d7fbdea1afc51c7c6ad26',
+        'd3d9446802a44259755d38e6d163e820',
+        '6512bd43d9caa6e02c990b0a82652dca',
+        'c20ad4d76fe97759aa27a0c99bff6710',
+        'c51ce410c124a10e0db5e4b97fc2af39',
     ];
 
     const commandOutput = {
         help: [
-            ['cyan', 'Available commands:'],
-            ['', '  scope     show authorised fictional scope'],
-            ['', '  recon     generate a passive reconnaissance summary'],
-            ['', '  dns       print fake DNS records'],
-            ['', '  http      inspect simulated HTTP headers'],
-            ['', '  tls       inspect simulated certificate details'],
-            ['', '  notes     show analyst timeline'],
-            ['', '  run       run a fake recon cycle'],
-            ['', '  clear     clear terminal'],
+            ['cyan', 'HTP/OS command palette'],
+            ['', '  tools     list running fake recon tools'],
+            ['', '  crack     spike the password-cracker theatre'],
+            ['', '  target    show fictional target dossier'],
+            ['', '  hack      run the simulated Hack Target scenario'],
+            ['', '  safety    explain why nothing here is real'],
+            ['', '  clear     clear console'],
         ],
-        scope: [
-            ['warn', 'Scope: SIMULATED / LOCAL FIXTURE ONLY'],
-            ['', 'Organisation: Example Corp Test Environment'],
-            ['', 'Domains: example-corp.test, *.example-corp.test'],
-            ['', 'IP space: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24'],
-            ['muted', 'These are documentation ranges. No internet traffic is generated.'],
+        tools: tools.map((tool) => ['', `${tool.name.padEnd(14)} ${tool.status.padEnd(4)} ${String(tool.progress).padStart(3)}%  ${tool.detail}`]),
+        target: [
+            ['warn', 'TARGET DOSSIER — FICTIONAL'],
+            ['', 'host: aurora.example-corp.test'],
+            ['', 'ip:   203.0.113.42 (documentation range)'],
+            ['', 'stack: nginx fixture, fake Grafana panel, seeded logs'],
+            ['', 'notes: vulnerable-looking details are theatrical and local'],
         ],
-        recon: [
-            ['cyan', 'Passive recon summary'],
-            ['', '5 assets inventoried from seed corpus'],
-            ['', '9 synthetic services mapped'],
-            ['', '4 findings staged for analyst review'],
-            ['warn', 'Realism mode: details are plausible but fabricated.'],
+        safety: [
+            ['warn', 'Safety model'],
+            ['', 'No fetch/WebSocket/API calls are made to targets.'],
+            ['', 'No DNS lookups, port scans, password attempts, or exploit traffic occur.'],
+            ['', 'All tool activity is generated in browser memory from fixed strings.'],
         ],
-        dns: [
-            ['', 'A    edge-01.example-corp.test      192.0.2.14'],
-            ['', 'A    vpn-gw.example-corp.test       198.51.100.22'],
-            ['', 'MX   mail-relay.example-corp.test   priority=10'],
-            ['', 'TXT  _dmarc.example-corp.test       v=DMARC1; p=quarantine; rua=mailto:dmarc@example-corp.test'],
-            ['muted', 'DNS output is a local fixture. No resolver was contacted.'],
-        ],
-        http: [
-            ['', 'GET https://edge-01.example-corp.test/ 200 OK'],
-            ['', 'Server: htp-simulated-edge'],
-            ['', 'Strict-Transport-Security: max-age=31536000; includeSubDomains'],
-            ['', 'Content-Security-Policy: default-src \'self\'; frame-ancestors \'none\''],
-            ['', 'X-Request-ID: sim-7f3c9d2b'],
-        ],
-        tls: [
-            ['', 'Subject: CN=edge-01.example-corp.test'],
-            ['', 'Issuer: CN=Kastro Demo Intermediate CA'],
-            ['', 'SAN: edge-01.example-corp.test, www.example-corp.test'],
-            ['warn', 'Not After: 2026-07-14T09:22:11Z (37 simulated days)'],
-            ['muted', 'Certificate object is fake and generated in browser memory.'],
-        ],
-        notes: timeline.map((line) => ['', line]),
     };
 
-    let runCount = 0;
-    let confidence = 72;
-    let packetFrame = 0;
+    let crackProgress = 8;
     let graphFrame = 0;
+    let packetFrame = 0;
+    let hacking = false;
 
     function line(className, text) {
         const div = document.createElement('div');
@@ -114,71 +99,116 @@
         item.className = 'toast';
         item.textContent = message;
         toastStack.appendChild(item);
-        setTimeout(() => item.remove(), 4200);
+        setTimeout(() => item.remove(), 4300);
     }
 
-    function renderAssets() {
-        assetList.innerHTML = assets.map((asset) => `
-            <section class="asset-card">
-                <header><span>${asset.host}</span><span class="badge">${asset.tag}</span></header>
-                <p><code>${asset.ip}</code> · ${asset.role}</p>
-                <p>Open services: ${asset.ports}</p>
-                <p>${asset.note}</p>
-            </section>
-        `).join('');
+    function renderTools() {
+        toolSwarm.innerHTML = tools.map((tool) => {
+            const badgeClass = tool.status === 'HOT' ? 'hot' : tool.status === 'IDLE' ? 'idle' : '';
+            return `<section class="tool-card">
+                <header><span>${tool.name}</span><span class="badge ${badgeClass}">${tool.status}</span></header>
+                <div class="progress" style="--value:${tool.progress}%"><span></span></div>
+                <p>${tool.detail}</p>
+            </section>`;
+        }).join('');
+        const avg = tools.reduce((sum, tool) => sum + tool.progress, 0) / tools.length;
+        toolLoad.textContent = `${Math.round(avg)}%`;
     }
 
-    function renderFindings() {
-        findingsEl.innerHTML = findings.map((finding) => `
-            <section class="finding">
-                <header><span>${finding.title}</span><span class="badge ${finding.severity}">${finding.severity}</span></header>
-                <p>${finding.body}</p>
-                <footer>${finding.evidence}</footer>
-            </section>
-        `).join('');
+    function renderScenario(activeIndex = -1, doneThrough = -1) {
+        scenarioSteps.innerHTML = scenario.map((step, index) => {
+            const cls = index === activeIndex ? 'active' : index <= doneThrough ? 'done' : '';
+            return `<li class="${cls}">${step}</li>`;
+        }).join('');
     }
 
-    function renderTimeline() {
-        timelineEl.innerHTML = timeline.map((item) => `<li>${item}</li>`).join('');
+    function addHashLine(forceHit = false) {
+        const row = document.createElement('div');
+        row.className = 'hash-line';
+        const hash = fakeHashes[Math.floor(Math.random() * fakeHashes.length)];
+        const rate = `${(180 + Math.random() * 760).toFixed(1)} kH/s`;
+        const result = forceHit || Math.random() > .82 ? '<b>DEMO-HIT</b>' : 'searching';
+        row.innerHTML = `<span>${hash.slice(0, 12)}…${hash.slice(-6)}</span><span>${rate}</span><span>${result}</span>`;
+        hashRain.prepend(row);
+        while (hashRain.children.length > 24) hashRain.lastElementChild.remove();
     }
 
-    function setMetrics(active = false) {
-        const traffic = active ? (18 + Math.random() * 54) : (Math.random() * 2.2);
-        trafficRate.textContent = `${traffic.toFixed(1)} kB/s`;
-        confidence = Math.min(96, confidence + (active ? Math.random() * 1.8 : Math.random() * .18));
-        confidenceEl.textContent = `${Math.floor(confidence)}%`;
-        const high = findings.some((finding) => finding.severity === 'high');
-        riskScore.textContent = high && confidence > 78 ? 'High' : 'Medium';
-        riskScore.style.color = high && confidence > 78 ? 'var(--red)' : 'var(--yellow)';
+    function setCrackProgress(value) {
+        crackProgress = Math.max(0, Math.min(100, value));
+        crackFill.style.width = `${crackProgress}%`;
+        crackPercent.textContent = `${Math.round(crackProgress)}%`;
     }
 
-    function runCycle() {
-        runCount += 1;
-        toast('Fake recon cycle running from local fixtures only.');
-        line('warn', `cycle[${runCount}] starting passive-only simulated workflow`);
-        const sequence = [
-            'loading fixture corpus: assets.json, dns.json, headers.json',
-            'normalising hostnames and documentation IP ranges',
-            'replaying synthetic HTTP/TLS observations',
-            'correlating findings with analyst timeline',
-            'cycle complete: no packets sent, no systems touched',
-        ];
-        sequence.forEach((text, index) => setTimeout(() => {
-            line(index === sequence.length - 1 ? 'cyan' : '', `cycle[${runCount}] ${text}`);
-            setMetrics(true);
-        }, index * 520));
+    function animateIdle() {
+        tools.forEach((tool) => {
+            const drift = tool.status === 'IDLE' ? Math.random() * 4 : 1 + Math.random() * 9;
+            tool.progress = (tool.progress + drift) % 100;
+            if (tool.progress < 8) tool.progress += 12;
+        });
+        renderTools();
+        setCrackProgress((crackProgress + Math.random() * 6) % 100);
+        addHashLine(false);
+    }
+
+    function runCrackerSpike() {
+        toast('Password cracker theatre spiking — fake hashes only.');
+        line('warn', 'hashcat-stage: loading toy hash corpus from browser memory');
+        for (let i = 0; i < 9; i += 1) {
+            setTimeout(() => {
+                setCrackProgress(Math.min(99, crackProgress + 7 + Math.random() * 9));
+                addHashLine(i > 5);
+                line(i > 5 ? 'cyan' : '', `hashcat-stage: batch ${i + 1}/9 ${i > 5 ? 'demo hit staged' : 'mask iteration complete'}`);
+            }, i * 260);
+        }
+    }
+
+    function runHackScenario() {
+        if (hacking) return;
+        hacking = true;
+        hackButton.classList.add('running');
+        hackButton.querySelector('span').textContent = 'Hacking…';
+        toast('Running staged Hack Target scenario. Still no real target.');
+        line('red', '>>> HACK TARGET pressed: beginning fictional scenario');
+        renderScenario(0, -1);
+
+        scenario.forEach((step, index) => {
+            setTimeout(() => {
+                renderScenario(index, index - 1);
+                const prefix = String(index + 1).padStart(2, '0');
+                line(index === 0 ? 'warn' : 'cyan', `[${prefix}/${scenario.length}] ${step}`);
+                tools[index % tools.length].status = index > 3 ? 'HOT' : 'RUN';
+                tools[index % tools.length].progress = 92;
+                setCrackProgress(Math.min(100, crackProgress + 13));
+                addHashLine(index > 2);
+                renderTools();
+            }, index * 1050);
+        });
+
+        setTimeout(() => {
+            renderScenario(-1, scenario.length - 1);
+            line('warn', '>>> Scenario complete: fictional compromise report generated');
+            line('muted', 'No network calls, no password attempts, no exploit traffic, no persistence.');
+            hackButton.classList.remove('running');
+            hackButton.querySelector('span').textContent = 'Hack Target';
+            hacking = false;
+            breachOverlay.classList.add('visible');
+        }, scenario.length * 1050 + 450);
     }
 
     function executeCommand(raw) {
         const command = raw.trim().toLowerCase();
         if (!command) return;
-        line('warn', `htp@simulator:~$ ${raw}`);
+        line('warn', `root@htp-os:~# ${raw}`);
         if (command === 'clear') {
             terminal.innerHTML = '';
             return;
         }
-        if (command === 'run') {
-            runCycle();
+        if (command === 'hack') {
+            runHackScenario();
+            return;
+        }
+        if (command === 'crack') {
+            runCrackerSpike();
             return;
         }
         if (commandOutput[command]) {
@@ -197,7 +227,7 @@
             localStorage.setItem('htp-fake-disclaimer-ack', 'true');
             disclaimer.classList.add('hidden');
             commandInput.focus();
-            toast('Entered fake operations room. Nothing here touches real systems.');
+            toast('HTP/OS booted. Simulation is local-only.');
         });
         aboutButton.addEventListener('click', () => {
             ackCheck.checked = true;
@@ -208,16 +238,17 @@
 
     function initTerminal() {
         block([
-            ['cyan', 'Hack the Planet console v2.0 — realistic fake operations mode'],
-            ['warn', 'Safety interlock: local simulation only. No scanning. No exploitation.'],
-            ['muted', 'Type help, or press “Run fake recon cycle”.'],
+            ['cyan', 'HTP/OS v3.0 — fake hacker operating system'],
+            ['warn', 'Safety interlock active: no scanning, no cracking, no exploitation.'],
+            ['muted', 'Recon tools and crackers are theatre. Press Hack Target for a staged scenario.'],
         ]);
         commandForm.addEventListener('submit', (event) => {
             event.preventDefault();
             executeCommand(commandInput.value);
             commandInput.value = '';
         });
-        runButton.addEventListener('click', runCycle);
+        hackButton.addEventListener('click', runHackScenario);
+        closeBreach.addEventListener('click', () => breachOverlay.classList.remove('visible'));
     }
 
     function sizeCanvas(canvas) {
@@ -233,42 +264,38 @@
     function drawGraph() {
         const canvas = $('#graph-canvas');
         const { ctx, width, height } = sizeCanvas(canvas);
-        graphFrame += .012;
+        graphFrame += .014;
         ctx.clearRect(0, 0, width, height);
-        const center = { x: width * .5, y: height * .48 };
-        const nodes = assets.map((asset, index) => {
-            const angle = (Math.PI * 2 * index / assets.length) + graphFrame;
-            return { asset, x: center.x + Math.cos(angle) * width * .29, y: center.y + Math.sin(angle) * height * .28 };
+        const center = { x: width * .52, y: height * .50 };
+        const nodes = [
+            ['fw', '#ffd43b'], ['vpn', '#66ff99'], ['admin', '#ff4d6d'], ['db', '#62dfff'], ['logs', '#66ff99'], ['ci', '#ffd43b'],
+        ].map(([label, color], index, arr) => {
+            const angle = Math.PI * 2 * index / arr.length + graphFrame;
+            return { label, color, x: center.x + Math.cos(angle) * width * .31, y: center.y + Math.sin(angle) * height * .29 };
         });
-        ctx.strokeStyle = 'rgba(255,212,59,.30)';
+        ctx.strokeStyle = 'rgba(255,212,59,.26)';
         ctx.lineWidth = 1;
         nodes.forEach((node) => {
-            ctx.beginPath();
-            ctx.moveTo(center.x, center.y);
-            ctx.lineTo(node.x, node.y);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(node.x, node.y); ctx.stroke();
         });
-        ctx.fillStyle = 'rgba(255,212,59,.95)';
+        ctx.fillStyle = '#ffd43b';
         ctx.shadowColor = '#ffd43b';
         ctx.shadowBlur = 18;
-        ctx.beginPath();
-        ctx.arc(center.x, center.y, 8, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(center.x, center.y, 9, 0, Math.PI * 2); ctx.fill();
         ctx.shadowBlur = 0;
+        ctx.font = '10px JetBrains Mono';
         nodes.forEach((node) => {
-            ctx.fillStyle = 'rgba(102,255,153,.95)';
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(216,252,226,.78)';
-            ctx.font = '10px JetBrains Mono';
-            ctx.fillText(node.asset.ip, node.x + 9, node.y + 4);
+            ctx.fillStyle = node.color;
+            ctx.beginPath(); ctx.arc(node.x, node.y, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(220,255,231,.8)';
+            ctx.fillText(node.label, node.x + 10, node.y + 4);
         });
         requestAnimationFrame(drawGraph);
     }
 
     function drawPackets() {
         const canvas = $('#packet-canvas');
+        if (!canvas) return;
         const { ctx, width, height } = sizeCanvas(canvas);
         packetFrame += 1;
         ctx.clearRect(0, 0, width, height);
@@ -276,30 +303,28 @@
         for (let i = 0; i < 28; i += 1) {
             const y = ((packetFrame * (1.2 + i * .05)) + i * 23) % (height + 28) - 14;
             const x = 10 + (i % 4) * (width / 4);
-            const color = i % 7 === 0 ? '255,212,59' : i % 5 === 0 ? '98,223,255' : '102,255,153';
-            ctx.fillStyle = `rgba(${color},${0.25 + (i % 6) * .08})`;
-            const src = assets[i % assets.length].ip;
-            const dst = assets[(i + 2) % assets.length].ip;
-            ctx.fillText(`${src} → ${dst}  TLS1.3  ${64 + ((i * 37) % 900)}B`, x, y);
+            ctx.fillStyle = i % 5 === 0 ? 'rgba(255,212,59,.55)' : 'rgba(102,255,153,.42)';
+            ctx.fillText(`203.0.113.42 → 192.0.2.${14 + i} TLS1.3 ${64 + ((i * 37) % 900)}B`, x, y);
         }
         requestAnimationFrame(drawPackets);
     }
 
     function tickClock() {
         $('#clock').textContent = new Date().toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false });
-        setMetrics(false);
     }
 
     function init() {
-        renderAssets();
-        renderFindings();
-        renderTimeline();
+        renderTools();
+        renderScenario();
         initDisclaimer();
         initTerminal();
+        setCrackProgress(crackProgress);
+        for (let i = 0; i < 16; i += 1) addHashLine(false);
         drawGraph();
         drawPackets();
         tickClock();
         setInterval(tickClock, 1000);
+        setInterval(animateIdle, 1500);
     }
 
     init();

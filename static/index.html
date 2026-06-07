@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hack the Planet by Kastro Labs</title>
-    <meta name="description" content="A realistic-looking but entirely fake hacker operations simulator by Kastro Labs. No scanning. No real targets. No hacking.">
-    <meta name="theme-color" content="#08110d">
+    <meta name="description" content="A fake hacker OS simulator by Kastro Labs with realistic-looking recon tools, password cracking theatre, and a simulated Hack Target scenario. No scanning. No real targets. No hacking.">
+    <meta name="theme-color" content="#050807">
     <meta property="og:title" content="Hack the Planet by Kastro Labs">
-    <meta property="og:description" content="A realistic fake hacker operations console. It does not scan, attack, or target anything.">
+    <meta property="og:description" content="A fake hacker OS simulator. Recon tools, crackers, and hacking scenarios are theatrical local simulations only.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://htp.kastro.is">
     <meta property="og:image" content="https://htp.kastro.is/img/og-hack-the-planet.svg">
     <meta property="og:image:type" content="image/svg+xml">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Hack the Planet by Kastro Labs — fake but realistic hacker app simulator.">
+    <meta property="og:image:alt" content="Hack the Planet by Kastro Labs — fake hacker OS simulator.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Hack the Planet by Kastro Labs">
-    <meta name="twitter:description" content="A realistic-looking fake hacker operations console. No real targets. No hacking.">
+    <meta name="twitter:description" content="Fake hacker OS simulator with a harmless simulated Hack Target flow.">
     <meta name="twitter:image" content="https://htp.kastro.is/img/og-hack-the-planet.svg">
     <link rel="canonical" href="https://htp.kastro.is">
     <link rel="icon" type="image/svg+xml" href="/img/kastro/star-only.svg">
@@ -29,83 +29,96 @@
         <div class="disclaimer-card">
             <div class="brand-row">
                 <span class="brand-mark"><img src="/img/kastro/star-only.svg" alt=""></span>
-                <span><strong>Kastro Labs</strong><em>Hack the Planet simulator</em></span>
+                <span><strong>Kastro Labs</strong><em>Hack the Planet OS</em></span>
             </div>
-            <p class="eyebrow">Read before entering</p>
-            <h1 id="disclaimer-title">This is a fake hacker app.</h1>
-            <p class="lede">Everything after this screen is simulated locally for entertainment: the hosts, DNS records, TLS certificates, packets, findings, logs, credentials, and command output.</p>
+            <p class="eyebrow">Safety interlock</p>
+            <h1 id="disclaimer-title">This hacker OS is fictional.</h1>
+            <p class="lede">Everything behind this screen is rendered locally as entertainment: the recon tools, password crackers, exploit chain, logs, packets, credentials, targets, and results.</p>
             <ul class="truth-list">
-                <li><strong>No real targets.</strong> Demo IPs use documentation ranges such as 192.0.2.0/24 and 203.0.113.0/24.</li>
-                <li><strong>No scanning or exploitation.</strong> The app does not probe the internet, bypass controls, or access systems.</li>
-                <li><strong>Realistic details, fake data.</strong> It is designed to feel like a serious analyst workstation, not a slideshow.</li>
+                <li><strong>No real targets.</strong> The only target is a fictional lab host: <code>aurora.example-corp.test</code>.</li>
+                <li><strong>No network scanning.</strong> Tool output is generated from local fixtures and documentation IP ranges.</li>
+                <li><strong>No real cracking or exploitation.</strong> “Hack Target” plays a staged scenario and never contacts external systems.</li>
             </ul>
-            <label class="ack-row"><input id="ack-check" type="checkbox"> I understand this is a harmless fictional simulator.</label>
-            <button id="enter-app" disabled>Enter simulated operations room</button>
+            <label class="ack-row"><input id="ack-check" type="checkbox"> I understand this is a harmless fake hacker OS simulator.</label>
+            <button id="enter-app" disabled>Boot fake hacker OS</button>
         </div>
     </div>
 
-    <main class="app-shell" aria-label="Fake hacker operations simulator">
-        <header class="topbar">
+    <main class="os-shell" aria-label="Fake hacker OS simulator">
+        <header class="os-topbar">
             <div class="identity">
                 <span class="brand-mark small"><img src="/img/kastro/star-only.svg" alt=""></span>
-                <div><strong>Hack the Planet</strong><em>Simulated adversary operations console</em></div>
+                <div><strong>HTP/OS</strong><em>local-only simulated intrusion lab</em></div>
             </div>
-            <div class="status-strip" aria-label="Simulation status">
+            <nav class="status-strip" aria-label="Simulation status">
                 <span><b id="clock">00:00:00</b> UTC</span>
-                <span class="ok">LOCAL SIMULATION</span>
-                <span class="warn">NO REAL TARGETS</span>
+                <span class="ok">SIMULATION ARMED</span>
+                <span class="warn">NO REAL NETWORK IO</span>
                 <button id="about-btn" type="button">Disclaimer</button>
-            </div>
+            </nav>
         </header>
 
-        <section class="casebar">
-            <div>
-                <p class="eyebrow">Operation</p>
-                <h2 id="case-name">OP-HTP-042 / Aurora Cabinet</h2>
+        <section class="target-deck">
+            <div class="target-card">
+                <p class="eyebrow">Current target</p>
+                <h1>aurora.example-corp.test</h1>
+                <p>Fictional perimeter lab with seeded mistakes: stale TLS, exposed admin panel, weak demo password policy, and noisy logs.</p>
             </div>
-            <div class="case-field"><span>Scope</span><strong>example-corp.test</strong></div>
-            <div class="case-field"><span>Traffic</span><strong id="traffic-rate">0.0 kB/s</strong></div>
-            <div class="case-field"><span>Confidence</span><strong id="confidence">72%</strong></div>
-            <div class="case-field"><span>Risk</span><strong id="risk-score">Medium</strong></div>
-            <button id="run-cycle" class="primary" type="button">Run fake recon cycle</button>
+            <div class="metric-card"><span>Mode</span><strong>Training sim</strong></div>
+            <div class="metric-card"><span>Scope</span><strong>RFC 5737</strong></div>
+            <div class="metric-card"><span>Tool load</span><strong id="tool-load">64%</strong></div>
+            <button id="hack-target" class="hack-button" type="button"><span>Hack Target</span><em>run staged scenario</em></button>
         </section>
 
-        <section class="workspace">
+        <section class="os-grid">
             <article class="panel terminal-panel">
-                <div class="panel-head"><span>operator terminal</span><em>type help</em></div>
+                <div class="panel-head"><span>root console</span><em>type help</em></div>
                 <div id="terminal" class="terminal" aria-live="polite"></div>
                 <form id="command-form" class="command-form">
-                    <label for="command-input">htp@simulator:~$</label>
-                    <input id="command-input" autocomplete="off" spellcheck="false" placeholder="try: scope, recon, dns, http, tls, run">
+                    <label for="command-input">root@htp-os:~#</label>
+                    <input id="command-input" autocomplete="off" spellcheck="false" placeholder="try: help, tools, crack, hack, clear">
                 </form>
             </article>
 
-            <article class="panel graph-panel">
-                <div class="panel-head"><span>attack surface map</span><em>fictional assets</em></div>
-                <canvas id="graph-canvas" aria-label="Animated fake network graph"></canvas>
+            <article class="panel tools-panel">
+                <div class="panel-head"><span>recon tool swarm</span><em>fake processes</em></div>
+                <div id="tool-swarm" class="tool-swarm"></div>
             </article>
 
-            <article class="panel intel-panel">
-                <div class="panel-head"><span>asset inventory</span><em>documentation IP ranges only</em></div>
-                <div id="asset-list" class="asset-list"></div>
+            <article class="panel cracker-panel">
+                <div class="panel-head"><span>password cracker theatre</span><em>not real cracking</em></div>
+                <div class="cracker-meter">
+                    <div id="crack-fill"></div>
+                    <span id="crack-percent">0%</span>
+                </div>
+                <div id="hash-rain" class="hash-rain"></div>
             </article>
 
-            <article class="panel findings-panel">
-                <div class="panel-head"><span>findings queue</span><em>simulated evidence</em></div>
-                <div id="findings" class="findings"></div>
+            <article class="panel map-panel">
+                <div class="panel-head"><span>target topology</span><em>fictional</em></div>
+                <canvas id="graph-canvas" aria-label="Animated fake target topology"></canvas>
+            </article>
+
+            <article class="panel scenario-panel">
+                <div class="panel-head"><span>attack scenario</span><em>press Hack Target</em></div>
+                <ol id="scenario-steps" class="scenario-steps"></ol>
             </article>
 
             <article class="panel packets-panel">
-                <div class="panel-head"><span>packet theatre</span><em>rendered noise, no network IO</em></div>
-                <canvas id="packet-canvas" aria-label="Fake packet visualization"></canvas>
-            </article>
-
-            <article class="panel timeline-panel">
-                <div class="panel-head"><span>evidence timeline</span><em>analyst notes</em></div>
-                <ol id="timeline" class="timeline"></ol>
+                <div class="panel-head"><span>packet theatre</span><em>rendered locally</em></div>
+                <canvas id="packet-canvas" aria-label="Fake packet theatre"></canvas>
             </article>
         </section>
     </main>
+
+    <div class="breach-overlay" id="breach-overlay" aria-live="polite">
+        <div class="breach-card">
+            <p class="eyebrow">Scenario complete</p>
+            <h2>Target “compromised” in fiction only.</h2>
+            <p>The simulator staged recon, credential guessing, privilege escalation, exfiltration rehearsal, and cleanup notes without touching any real system.</p>
+            <button id="close-breach" type="button">Return to OS</button>
+        </div>
+    </div>
 
     <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
     <script src="/js/main.js" defer></script>
