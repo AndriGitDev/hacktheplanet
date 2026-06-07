@@ -988,6 +988,26 @@ body[data-theme="kastro"] {
     letter-spacing: 2px;
 }
 .share-overlay span { color: rgba(255,255,255,.72); font-size: 10px; }
+.share-overlay code {
+    max-width: 100%;
+    padding: 4px 7px;
+    color: #05070b;
+    background: var(--kastro-yellow);
+    border-radius: 2px;
+    font: 700 10px var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.share-overlay em {
+    color: rgba(255,255,255,.58);
+    font-size: 9px;
+    font-style: normal;
+    letter-spacing: 1px;
+    text-transform: none;
+}
 .screenshot-ready .dashboard,
 .screenshot-ready .panel,
 .screenshot-ready .status-bar,

@@ -24,6 +24,8 @@ export function setupExperience({ onStart }) {
     const aboutModal = document.getElementById('about-modal');
     const codenameInput = document.getElementById('codename-input');
     const shareOverlay = document.getElementById('share-overlay');
+    const shareUrl = document.getElementById('share-url');
+    const shareCopyStatus = document.getElementById('share-copy-status');
     const bossScreen = document.getElementById('boss-screen');
     const achievementStack = document.getElementById('achievement-stack');
     const themeChips = [...document.querySelectorAll('[data-theme-choice]')];
@@ -63,6 +65,7 @@ export function setupExperience({ onStart }) {
         url.searchParams.set('mode', body.dataset.theme || 'vhs');
         url.searchParams.set('codename', slugCodename(codenameInput.value).toLowerCase());
         history.replaceState(null, '', url);
+        if (shareUrl) shareUrl.textContent = url.href;
     }
 
     applyTheme(initialTheme);
@@ -93,8 +96,18 @@ export function setupExperience({ onStart }) {
         screenshotBtn.setAttribute('aria-pressed', String(isScreenshotReady));
         toast('screenshot');
         updateShareUrl();
+        if (shareCopyStatus) {
+            shareCopyStatus.textContent = isScreenshotReady
+                ? 'Share link ready. Copy permission depends on your browser.'
+                : 'Screenshot mode freezes the frame and copies the share link when allowed.';
+        }
         if (navigator.clipboard && isScreenshotReady) {
-            try { await navigator.clipboard.writeText(window.location.href); } catch (_) { /* non-critical */ }
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                if (shareCopyStatus) shareCopyStatus.textContent = 'Share link copied. Toy interface only — no real targets.';
+            } catch (_) {
+                if (shareCopyStatus) shareCopyStatus.textContent = 'Share link ready; copy it from this badge if browser copy is blocked.';
+            }
         }
     });
 
