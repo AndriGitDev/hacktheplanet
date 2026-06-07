@@ -2,6 +2,7 @@ const ACHIEVEMENTS = {
     start: ['MAINFRAME VIBES ACQUIRED', 'You pushed the big cinematic button. Bold.'],
     screenshot: ['SCREENSHOT BAIT READY', 'Animations paused just enough for social proof.'],
     boss: ['MANAGER PROXIMITY DETECTED', 'Quarterly infrastructure hygiene camouflage enabled.'],
+    share: ['SHARE LINK COPIED', 'A harmless simulator link is ready for the group chat.'],
     theme: ['AESTHETIC SWITCHER', 'The hacker movie now has lighting direction.'],
     disclaimer: ['I READ THE DISCLAIMER', 'Security culture begins with not pretending toys are weapons.'],
 };
@@ -17,6 +18,7 @@ function slugCodename(value) {
 export function setupExperience({ onStart }) {
     const body = document.body;
     const hackBtn = document.getElementById('hack-btn');
+    const copyShareBtn = document.getElementById('copy-share');
     const screenshotBtn = document.getElementById('screenshot-mode');
     const bossBtn = document.getElementById('boss-mode');
     const exitBossBtn = document.getElementById('exit-boss');
@@ -66,6 +68,25 @@ export function setupExperience({ onStart }) {
         url.searchParams.set('codename', slugCodename(codenameInput.value).toLowerCase());
         history.replaceState(null, '', url);
         if (shareUrl) shareUrl.textContent = url.href;
+        return url.href;
+    }
+
+    async function copyShareLink({ showToast = true } = {}) {
+        const url = updateShareUrl();
+        let message = 'Share link ready. Copy it from screenshot mode if browser copy is blocked.';
+        if (navigator.clipboard) {
+            try {
+                await navigator.clipboard.writeText(url);
+                message = 'Share link copied. Toy interface only — no real targets.';
+            } catch (_) {
+                message = 'Share link ready; browser copy permission was blocked.';
+            }
+        }
+        if (shareCopyStatus) shareCopyStatus.textContent = message;
+        if (copyShareBtn) copyShareBtn.textContent = message.includes('copied') ? 'Link copied' : 'Copy share link';
+        if (showToast) toast('share');
+        if (copyShareBtn) setTimeout(() => { copyShareBtn.textContent = 'Copy share link'; }, 1800);
+        return message;
     }
 
     applyTheme(initialTheme);
@@ -88,6 +109,8 @@ export function setupExperience({ onStart }) {
         onStart({ codename: slugCodename(codenameInput.value), theme: body.dataset.theme || 'vhs' });
     });
 
+    copyShareBtn.addEventListener('click', () => copyShareLink());
+
     screenshotBtn.addEventListener('click', async () => {
         body.classList.toggle('screenshot-ready');
         const isScreenshotReady = body.classList.contains('screenshot-ready');
@@ -101,14 +124,7 @@ export function setupExperience({ onStart }) {
                 ? 'Share link ready. Copy permission depends on your browser.'
                 : 'Screenshot mode freezes the frame and copies the share link when allowed.';
         }
-        if (navigator.clipboard && isScreenshotReady) {
-            try {
-                await navigator.clipboard.writeText(window.location.href);
-                if (shareCopyStatus) shareCopyStatus.textContent = 'Share link copied. Toy interface only — no real targets.';
-            } catch (_) {
-                if (shareCopyStatus) shareCopyStatus.textContent = 'Share link ready; copy it from this badge if browser copy is blocked.';
-            }
-        }
+        if (isScreenshotReady) await copyShareLink({ showToast: false });
     });
 
     bossBtn.addEventListener('click', () => {
@@ -137,6 +153,7 @@ export function setupExperience({ onStart }) {
             bossScreen.hidden = !bossScreen.hidden;
             bossBtn.setAttribute('aria-pressed', String(!bossScreen.hidden));
         }
+        if (event.key.toLowerCase() === 'c') copyShareLink();
         if (event.key.toLowerCase() === 's') screenshotBtn.click();
         if (event.key === 'Escape') {
             bossScreen.hidden = true;
