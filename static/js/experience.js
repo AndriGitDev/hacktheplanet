@@ -165,6 +165,7 @@ export function setupExperience({ onStart }) {
     return {
         getCodename: () => slugCodename(codenameInput.value),
         setRunning(isRunning) {
+            body.classList.toggle('simulation-running', isRunning);
             hackBtn.disabled = isRunning;
             hackBtn.classList.toggle('running', isRunning);
         },
