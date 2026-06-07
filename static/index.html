@@ -38,13 +38,19 @@
             <span>Operation codename</span>
             <input id="codename-input" maxlength="28" autocomplete="off" spellcheck="false" value="NO-PACKETS-HARMED">
         </label>
+        <p class="keyboard-hints" aria-label="Keyboard shortcuts">
+            <span><kbd>Enter</kbd> start</span>
+            <span><kbd>S</kbd> screenshot</span>
+            <span><kbd>B</kbd> boss</span>
+            <span><kbd>Esc</kbd> reset</span>
+        </p>
         <div class="hero-actions">
             <button id="hack-btn">
                 Start cinematic simulation
                 <span class="btn-sub">No breach. No target. Just vibes.</span>
             </button>
-            <button id="screenshot-mode" class="utility-btn" type="button">Screenshot mode</button>
-            <button id="boss-mode" class="utility-btn danger" type="button">Boss mode</button>
+            <button id="screenshot-mode" class="utility-btn" type="button" aria-pressed="false">Screenshot mode</button>
+            <button id="boss-mode" class="utility-btn danger" type="button" aria-pressed="false">Boss mode</button>
             <button id="about-toggle" class="utility-btn" type="button">About this toy</button>
         </div>
         <p class="safety-pill">Toy interface. No real targets. No hacking. No packets were harmed.</p>
@@ -95,10 +101,10 @@
     </div>
 
     <aside class="theme-dock" aria-label="Theme controls">
-        <button class="theme-chip active" data-theme-choice="vhs" type="button">VHS green</button>
-        <button class="theme-chip" data-theme-choice="amber" type="button">Cyber amber</button>
-        <button class="theme-chip" data-theme-choice="noir" type="button">Nordic noir</button>
-        <button class="theme-chip" data-theme-choice="kastro" type="button">Kastro yellow</button>
+        <button class="theme-chip active" data-theme-choice="vhs" type="button" aria-pressed="true">VHS green</button>
+        <button class="theme-chip" data-theme-choice="amber" type="button" aria-pressed="false">Cyber amber</button>
+        <button class="theme-chip" data-theme-choice="noir" type="button" aria-pressed="false">Nordic noir</button>
+        <button class="theme-chip" data-theme-choice="kastro" type="button" aria-pressed="false">Kastro yellow</button>
     </aside>
 
     <div id="achievement-stack" class="achievement-stack" aria-live="polite"></div>

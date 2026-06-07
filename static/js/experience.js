@@ -47,7 +47,15 @@ export function setupExperience({ onStart }) {
 
     function applyTheme(theme) {
         body.dataset.theme = theme;
-        themeChips.forEach(chip => chip.classList.toggle('active', chip.dataset.themeChoice === theme));
+        themeChips.forEach(chip => {
+            const isActive = chip.dataset.themeChoice === theme;
+            chip.classList.toggle('active', isActive);
+            chip.setAttribute('aria-pressed', String(isActive));
+        });
+    }
+
+    function isTypingTarget(target) {
+        return target?.matches?.('input, textarea, select, [contenteditable="true"]');
     }
 
     function updateShareUrl() {
@@ -79,22 +87,26 @@ export function setupExperience({ onStart }) {
 
     screenshotBtn.addEventListener('click', async () => {
         body.classList.toggle('screenshot-ready');
-        shareOverlay.hidden = !body.classList.contains('screenshot-ready');
-        screenshotBtn.textContent = body.classList.contains('screenshot-ready') ? 'Exit screenshot mode' : 'Screenshot mode';
+        const isScreenshotReady = body.classList.contains('screenshot-ready');
+        shareOverlay.hidden = !isScreenshotReady;
+        screenshotBtn.textContent = isScreenshotReady ? 'Exit screenshot mode' : 'Screenshot mode';
+        screenshotBtn.setAttribute('aria-pressed', String(isScreenshotReady));
         toast('screenshot');
         updateShareUrl();
-        if (navigator.clipboard && body.classList.contains('screenshot-ready')) {
+        if (navigator.clipboard && isScreenshotReady) {
             try { await navigator.clipboard.writeText(window.location.href); } catch (_) { /* non-critical */ }
         }
     });
 
     bossBtn.addEventListener('click', () => {
         bossScreen.hidden = false;
+        bossBtn.setAttribute('aria-pressed', 'true');
         toast('boss');
     });
 
     exitBossBtn.addEventListener('click', () => {
         bossScreen.hidden = true;
+        bossBtn.setAttribute('aria-pressed', 'false');
     });
 
     aboutBtn.addEventListener('click', () => {
@@ -104,10 +116,18 @@ export function setupExperience({ onStart }) {
     });
 
     document.addEventListener('keydown', (event) => {
-        if (event.key.toLowerCase() === 'b') bossScreen.hidden = !bossScreen.hidden;
+        if (isTypingTarget(event.target)) {
+            if (event.key === 'Enter') hackBtn.click();
+            if (event.key !== 'Escape') return;
+        }
+        if (event.key.toLowerCase() === 'b') {
+            bossScreen.hidden = !bossScreen.hidden;
+            bossBtn.setAttribute('aria-pressed', String(!bossScreen.hidden));
+        }
         if (event.key.toLowerCase() === 's') screenshotBtn.click();
         if (event.key === 'Escape') {
             bossScreen.hidden = true;
+            bossBtn.setAttribute('aria-pressed', 'false');
             if (body.classList.contains('screenshot-ready')) screenshotBtn.click();
         }
     });
