@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hack the Planet by Kastro Labs</title>
-    <meta name="description" content="A fake hacker OS simulator by Kastro Labs with realistic-looking recon tools, password cracking theatre, and a simulated Hack Target scenario. No scanning. No real targets. No hacking.">
+    <meta name="description" content="A Hollywood-style fake hacker OS simulator by Kastro Labs. Cinematic recon tools, toy password-cracker theatre, and a staged Hack Target flow. No scanning. No real targets. No hacking.">
     <meta name="theme-color" content="#050807">
     <meta property="og:title" content="Hack the Planet by Kastro Labs">
-    <meta property="og:description" content="A fake hacker OS simulator. Recon tools, crackers, and hacking scenarios are theatrical local simulations only.">
+    <meta property="og:description" content="Hollywood hacker-movie simulator. All tools, targets, packets, and outcomes are fictional local theatre.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://htp.kastro.is">
     <meta property="og:image" content="https://htp.kastro.is/img/og-hack-the-planet.svg">
     <meta property="og:image:type" content="image/svg+xml">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Hack the Planet by Kastro Labs — fake hacker OS simulator.">
+    <meta property="og:image:alt" content="Hack the Planet by Kastro Labs — fake Hollywood hacker OS simulator.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Hack the Planet by Kastro Labs">
-    <meta name="twitter:description" content="Fake hacker OS simulator with a harmless simulated Hack Target flow.">
+    <meta name="twitter:description" content="Fake Hollywood hacker OS simulator with harmless cinematic Hack Target flow.">
     <meta name="twitter:image" content="https://htp.kastro.is/img/og-hack-the-planet.svg">
     <link rel="canonical" href="https://htp.kastro.is">
     <link rel="icon" type="image/svg+xml" href="/img/kastro/star-only.svg">
@@ -25,6 +25,8 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+    <canvas id="matrix-canvas" aria-hidden="true"></canvas>
+
     <div class="disclaimer" id="disclaimer" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title">
         <div class="disclaimer-card">
             <div class="brand-row">
@@ -32,47 +34,54 @@
                 <span><strong>Kastro Labs</strong><em>Hack the Planet OS</em></span>
             </div>
             <p class="eyebrow">Safety interlock</p>
-            <h1 id="disclaimer-title">This hacker OS is fictional.</h1>
-            <p class="lede">Everything behind this screen is rendered locally as entertainment: the recon tools, password crackers, exploit chain, logs, packets, credentials, targets, and results.</p>
+            <h1 id="disclaimer-title">This is Hollywood hacker fiction.</h1>
+            <p class="lede">The interface behind this screen is intentionally dramatic. Every recon tool, password cracker, globe trace, packet, credential, target, and outcome is simulated locally for entertainment.</p>
             <ul class="truth-list">
-                <li><strong>No real targets.</strong> The only target is a fictional lab host: <code>aurora.example-corp.test</code>.</li>
-                <li><strong>No network scanning.</strong> Tool output is generated from local fixtures and documentation IP ranges.</li>
-                <li><strong>No real cracking or exploitation.</strong> “Hack Target” plays a staged scenario and never contacts external systems.</li>
+                <li><strong>No real targets.</strong> The only target is fictional: <code>aurora.example-corp.test</code>.</li>
+                <li><strong>No network activity.</strong> No DNS lookups, scans, password attempts, or exploit traffic are performed.</li>
+                <li><strong>Movie logic only.</strong> The big yellow button creates spectacle, not compromise.</li>
             </ul>
-            <label class="ack-row"><input id="ack-check" type="checkbox"> I understand this is a harmless fake hacker OS simulator.</label>
-            <button id="enter-app" disabled>Boot fake hacker OS</button>
+            <label class="ack-row"><input id="ack-check" type="checkbox"> I understand this is a harmless cinematic simulator.</label>
+            <button id="enter-app" disabled>Boot Hollywood hacker OS</button>
         </div>
     </div>
 
-    <main class="os-shell" aria-label="Fake hacker OS simulator">
+    <main class="os-shell" aria-label="Fake Hollywood hacker OS simulator">
         <header class="os-topbar">
             <div class="identity">
                 <span class="brand-mark small"><img src="/img/kastro/star-only.svg" alt=""></span>
-                <div><strong>HTP/OS</strong><em>local-only simulated intrusion lab</em></div>
+                <div><strong>HTP/OS</strong><em>cinematic local-only intrusion theatre</em></div>
             </div>
             <nav class="status-strip" aria-label="Simulation status">
                 <span><b id="clock">00:00:00</b> UTC</span>
-                <span class="ok">SIMULATION ARMED</span>
+                <span class="ok">MOVIE LOGIC ACTIVE</span>
                 <span class="warn">NO REAL NETWORK IO</span>
                 <button id="about-btn" type="button">Disclaimer</button>
             </nav>
         </header>
 
-        <section class="target-deck">
+        <section class="hero-command">
             <div class="target-card">
-                <p class="eyebrow">Current target</p>
+                <p class="eyebrow">Mainframe objective</p>
                 <h1>aurora.example-corp.test</h1>
-                <p>Fictional perimeter lab with seeded mistakes: stale TLS, exposed admin panel, weak demo password policy, and noisy logs.</p>
+                <p>Fictional lab target with seeded drama: neon packet storms, fake auth prompts, toy hashes, plot firewall, and a finale designed to make lay people say “wait, what is happening?”</p>
             </div>
-            <div class="metric-card"><span>Mode</span><strong>Training sim</strong></div>
-            <div class="metric-card"><span>Scope</span><strong>RFC 5737</strong></div>
-            <div class="metric-card"><span>Tool load</span><strong id="tool-load">64%</strong></div>
-            <button id="hack-target" class="hack-button" type="button"><span>Hack Target</span><em>run staged scenario</em></button>
+            <div class="doom-dial">
+                <span>TRACE</span>
+                <strong id="trace-count">05:00</strong>
+                <em>pure theatre</em>
+            </div>
+            <button id="hack-target" class="hack-button" type="button"><span>Hack Target</span><em>cinematic simulation</em></button>
         </section>
 
-        <section class="os-grid">
+        <section class="cinema-grid">
+            <article class="panel globe-panel">
+                <div class="panel-head"><span>world trace globe</span><em>fictional plot nodes</em></div>
+                <canvas id="globe-canvas" aria-label="Cinematic fake world trace globe"></canvas>
+            </article>
+
             <article class="panel terminal-panel">
-                <div class="panel-head"><span>root console</span><em>type help</em></div>
+                <div class="panel-head"><span>root console</span><em>movie terminal</em></div>
                 <div id="terminal" class="terminal" aria-live="polite"></div>
                 <form id="command-form" class="command-form">
                     <label for="command-input">root@htp-os:~#</label>
@@ -80,42 +89,42 @@
                 </form>
             </article>
 
-            <article class="panel tools-panel">
-                <div class="panel-head"><span>recon tool swarm</span><em>fake processes</em></div>
+            <article class="panel swarm-panel">
+                <div class="panel-head"><span>recon swarm</span><em>fake tool windows</em></div>
                 <div id="tool-swarm" class="tool-swarm"></div>
             </article>
 
             <article class="panel cracker-panel">
-                <div class="panel-head"><span>password cracker theatre</span><em>not real cracking</em></div>
-                <div class="cracker-meter">
-                    <div id="crack-fill"></div>
-                    <span id="crack-percent">0%</span>
-                </div>
+                <div class="panel-head"><span>password cracker theatre</span><em>toy hashes only</em></div>
+                <div class="cracker-meter"><div id="crack-fill"></div><span id="crack-percent">0%</span></div>
                 <div id="hash-rain" class="hash-rain"></div>
             </article>
 
-            <article class="panel map-panel">
-                <div class="panel-head"><span>target topology</span><em>fictional</em></div>
-                <canvas id="graph-canvas" aria-label="Animated fake target topology"></canvas>
-            </article>
-
-            <article class="panel scenario-panel">
-                <div class="panel-head"><span>attack scenario</span><em>press Hack Target</em></div>
+            <article class="panel scene-panel">
+                <div class="panel-head"><span>cinematic sequence</span><em>press Hack Target</em></div>
+                <div id="scene-title" class="scene-title">Awaiting big yellow button.</div>
                 <ol id="scenario-steps" class="scenario-steps"></ol>
-            </article>
-
-            <article class="panel packets-panel">
-                <div class="panel-head"><span>packet theatre</span><em>rendered locally</em></div>
-                <canvas id="packet-canvas" aria-label="Fake packet theatre"></canvas>
             </article>
         </section>
     </main>
 
+    <div class="movie-overlay" id="movie-overlay" aria-live="polite">
+        <div class="movie-card">
+            <p class="eyebrow">Cinematic simulation running</p>
+            <h2 id="movie-title">INITIALISING MAINFRAME THEATRE</h2>
+            <div class="movie-grid">
+                <div class="movie-orb"><canvas id="overlay-canvas" aria-hidden="true"></canvas><span id="overlay-count">3</span></div>
+                <div class="movie-log" id="movie-log"></div>
+            </div>
+            <p class="safety-line">Toy interface. No real targets. No packets harmed.</p>
+        </div>
+    </div>
+
     <div class="breach-overlay" id="breach-overlay" aria-live="polite">
         <div class="breach-card">
-            <p class="eyebrow">Scenario complete</p>
-            <h2>Target “compromised” in fiction only.</h2>
-            <p>The simulator staged recon, credential guessing, privilege escalation, exfiltration rehearsal, and cleanup notes without touching any real system.</p>
+            <p class="eyebrow">Hollywood ending</p>
+            <h2>Planet hacked. Reality untouched.</h2>
+            <p>The simulator staged a dramatic recon, fake password-cracker surge, plot firewall bypass, and fictional trophy screen. It did not contact, scan, crack, or compromise anything.</p>
             <button id="close-breach" type="button">Return to OS</button>
         </div>
     </div>
