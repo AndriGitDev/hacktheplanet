@@ -4,130 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hack the Planet by Kastro Labs</title>
-    <meta name="description" content="A Hollywood-style fake hacker OS simulator by Kastro Labs. Cinematic recon tools, toy password-cracker theatre, and a staged Hack Target flow. No scanning. No real targets. No hacking.">
-    <meta name="theme-color" content="#050807">
+    <meta name="description" content="A harmless cyberpunk arcade ritual by Kastro Labs. Choose a fictional mission, press the big yellow button, and leave with a ridiculous hacker-movie report. No targets. No packets. Just movie logic.">
+    <meta name="theme-color" content="#ffd400">
     <meta property="og:title" content="Hack the Planet by Kastro Labs">
-    <meta property="og:description" content="Hollywood hacker-movie simulator. All tools, targets, packets, and outcomes are fictional local theatre.">
+    <meta property="og:description" content="A harmless cyberpunk arcade machine. No targets. No packets. Just movie logic.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://htp.kastro.is">
     <meta property="og:image" content="https://htp.kastro.is/img/og-hack-the-planet.svg">
     <meta property="og:image:type" content="image/svg+xml">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Hack the Planet by Kastro Labs — fake Hollywood hacker OS simulator.">
+    <meta property="og:image:alt" content="Hack the Planet by Kastro Labs — harmless cyberpunk arcade ritual.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Hack the Planet by Kastro Labs">
-    <meta name="twitter:description" content="Fake Hollywood hacker OS simulator with harmless cinematic Hack Target flow.">
+    <meta name="twitter:description" content="Press the big yellow button. Become a fictional hacker. No packets harmed.">
     <meta name="twitter:image" content="https://htp.kastro.is/img/og-hack-the-planet.svg">
     <link rel="canonical" href="https://htp.kastro.is">
     <link rel="icon" type="image/svg+xml" href="/img/kastro/star-only.svg">
     <link rel="apple-touch-icon" href="/img/kastro/star-only.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Outfit:wght@500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <canvas id="matrix-canvas" aria-hidden="true"></canvas>
+    <canvas id="atmosphere" aria-hidden="true"></canvas>
 
-    <div class="disclaimer" id="disclaimer" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title">
-        <div class="disclaimer-card">
-            <div class="brand-row">
+    <main class="arcade" aria-label="Hack the Planet harmless cyberpunk arcade">
+        <header class="topbar">
+            <a class="brand" href="/" aria-label="Hack the Planet by Kastro Labs">
                 <span class="brand-mark"><img src="/img/kastro/star-only.svg" alt=""></span>
-                <span><strong>Kastro Labs</strong><em>Hack the Planet OS</em></span>
-            </div>
-            <p class="eyebrow">Safety interlock</p>
-            <h1 id="disclaimer-title">This is Hollywood hacker fiction.</h1>
-            <p class="lede">The interface behind this screen is intentionally dramatic. Every recon tool, password cracker, globe trace, packet, credential, target, and outcome is simulated locally for entertainment.</p>
-            <ul class="truth-list">
-                <li><strong>No real targets.</strong> The only target is fictional: <code>aurora.example-corp.test</code>.</li>
-                <li><strong>No network activity.</strong> No DNS lookups, scans, password attempts, or exploit traffic are performed.</li>
-                <li><strong>Movie logic only.</strong> The big yellow button creates spectacle, not compromise.</li>
-            </ul>
-            <label class="ack-row"><input id="ack-check" type="checkbox"> I understand this is a harmless cinematic simulator.</label>
-            <button id="enter-app" disabled>Boot Hollywood hacker OS</button>
-        </div>
-    </div>
-
-    <main class="os-shell" aria-label="Fake Hollywood hacker OS simulator">
-        <header class="os-topbar">
-            <div class="identity">
-                <span class="brand-mark small"><img src="/img/kastro/star-only.svg" alt=""></span>
-                <div><strong>HTP/OS</strong><em>cinematic local-only intrusion theatre</em></div>
-            </div>
-            <nav class="status-strip" aria-label="Simulation status">
-                <span><b id="clock">00:00:00</b> UTC</span>
-                <span class="ok">MOVIE LOGIC ACTIVE</span>
-                <span class="warn">NO REAL NETWORK IO</span>
-                <button id="about-btn" type="button">Disclaimer</button>
+                <span><strong>Kastro Labs</strong><em>HTP arcade cabinet // reality locked</em></span>
+            </a>
+            <nav class="machine-status" aria-label="Machine status">
+                <span id="clock">00:00:00 UTC</span>
+                <span>network io: <b>0</b></span>
+                <span>packets harmed: <b>0</b></span>
+                <button id="reset-run" type="button">Reset</button>
             </nav>
         </header>
 
-        <section class="hero-command">
-            <div class="target-card">
-                <p class="eyebrow">Mainframe objective</p>
-                <h1>aurora.example-corp.test</h1>
-                <p>Fictional lab target with seeded drama: neon packet storms, fake auth prompts, toy hashes, plot firewall, and a finale designed to make lay people say “wait, what is happening?”</p>
+        <div class="marquee-strip" aria-label="Harmless arcade safety status">
+            <span>reality lock green</span><span>local pixels only</span><span>no targets</span><span>no packets</span><span>cinematic nonsense authorised</span>
+        </div>
+
+        <section class="boot-panel" id="boot-panel" aria-labelledby="boot-title">
+            <div class="boot-copy">
+                <p class="eyebrow">Reality lock engaged</p>
+                <h1 id="boot-title">Hack the planet. Touch nothing real.</h1>
+                <p class="lede">A browser-only cyberpunk arcade ritual: pick a fictional mission, hammer the big yellow button, and leave with a shareable hacker-movie report. No targets. No packets. No nonsense pretending otherwise.</p>
+                <ul class="safety-list">
+                    <li><strong>No targets.</strong> Missions are invented props.</li>
+                    <li><strong>No packets.</strong> Animation, text, and timers only.</li>
+                    <li><strong>No hacking.</strong> Just movie logic in Kastro yellow.</li>
+                </ul>
             </div>
-            <div class="doom-dial">
-                <span>TRACE</span>
-                <strong id="trace-count">05:00</strong>
-                <em>pure theatre</em>
+            <div class="boot-card" aria-label="Arcade cabinet boot card">
+                <div class="cabinet-label">HTP/OS-ARCADE</div>
+                <div class="boot-screen">
+                    <i class="cabinet-corner tl"></i><i class="cabinet-corner tr"></i><i class="cabinet-corner bl"></i><i class="cabinet-corner br"></i>
+                    <span>INSERT IMAGINATION</span>
+                    <strong>NO PACKETS<br>NO CRIMES<br>PURE CINEMA</strong>
+                </div>
+                <button id="boot-button" class="primary-button" type="button"><span>Boot the toy mainframe</span><em>safe local ritual</em></button>
             </div>
-            <button id="hack-target" class="hack-button" type="button"><span>Hack Target</span><em>cinematic simulation</em></button>
         </section>
 
-        <section class="cinema-grid">
-            <article class="panel globe-panel">
-                <div class="panel-head"><span>world trace globe</span><em>fictional plot nodes</em></div>
-                <canvas id="globe-canvas" aria-label="Cinematic fake world trace globe"></canvas>
-            </article>
+        <section class="mission-select" id="mission-select" aria-labelledby="mission-title" hidden>
+            <div class="section-head">
+                <p class="eyebrow">Mission select</p>
+                <h2 id="mission-title">Choose your cabinet mode.</h2>
+                <p>Three routes. Same rule: the only thing under attack is realism.</p>
+            </div>
+            <div class="mission-grid">
+                <button class="mission-card" type="button" data-mission="hack">
+                    <span class="mission-number">01</span>
+                    <strong>Hack the Planet</strong>
+                    <em>Overthrow a prop mainframe with dramatic lighting and suspiciously fast typing.</em>
+                    <b>classic chaos</b>
+                </button>
+                <button class="mission-card" type="button" data-mission="save">
+                    <span class="mission-number">02</span>
+                    <strong>Save the Planet</strong>
+                    <em>Patch the neon infrastructure before movie logic becomes a preventable montage.</em>
+                    <b>defensive hero</b>
+                </button>
+                <button class="mission-card" type="button" data-mission="confuse">
+                    <span class="mission-number">03</span>
+                    <strong>Confuse the Planet</strong>
+                    <em>Deploy jazz, rubber ducks, malformed YAML, and one legally distinct trench coat.</em>
+                    <b>absurdist mode</b>
+                </button>
+            </div>
+        </section>
 
-            <article class="panel terminal-panel">
-                <div class="panel-head"><span>root console</span><em>movie terminal</em></div>
+        <section class="stage" id="stage" aria-labelledby="stage-title" hidden>
+            <aside class="mission-rail">
+                <p class="eyebrow">Current mission</p>
+                <h2 id="stage-title">Hack the Planet</h2>
+                <p id="stage-brief">Overthrow the fictional mainframe.</p>
+                <div class="meter-block">
+                    <span>Movie logic</span>
+                    <div class="meter"><i id="logic-meter"></i></div>
+                    <b id="logic-value">0%</b>
+                </div>
+                <ol id="step-list" class="step-list"></ol>
+                <p class="microcopy">Reality lock: green. The cabinet cannot reach real systems.</p>
+            </aside>
+
+            <div class="planet-console">
+                <div class="screen-bezel">
+                    <div class="screen-labels"><span>fictional mainframe</span><span id="mission-code">HTP-01</span></div>
+                    <canvas id="planet-canvas" aria-label="Animated fictional planet and mainframe ritual"></canvas>
+                    <div class="planet-readout" id="planet-readout">Awaiting operator ritual.</div>
+                </div>
+                <button id="ritual-button" class="ritual-button" type="button"><span>Acquire vibes</span><em>big yellow button</em></button>
+            </div>
+
+            <aside class="terminal-card">
+                <div class="terminal-head"><span>operator transcript</span><button id="copy-log" type="button">Copy log</button></div>
                 <div id="terminal" class="terminal" aria-live="polite"></div>
-                <form id="command-form" class="command-form">
-                    <label for="command-input">root@htp-os:~#</label>
-                    <input id="command-input" autocomplete="off" spellcheck="false" placeholder="try: help, tools, crack, hack, clear">
-                </form>
-            </article>
+            </aside>
+        </section>
 
-            <article class="panel swarm-panel">
-                <div class="panel-head"><span>recon swarm</span><em>fake tool windows</em></div>
-                <div id="tool-swarm" class="tool-swarm"></div>
-            </article>
-
-            <article class="panel cracker-panel">
-                <div class="panel-head"><span>password cracker theatre</span><em>toy hashes only</em></div>
-                <div class="cracker-meter"><div id="crack-fill"></div><span id="crack-percent">0%</span></div>
-                <div id="hash-rain" class="hash-rain"></div>
-            </article>
-
-            <article class="panel scene-panel">
-                <div class="panel-head"><span>cinematic sequence</span><em>press Hack Target</em></div>
-                <div id="scene-title" class="scene-title">Awaiting big yellow button.</div>
-                <ol id="scenario-steps" class="scenario-steps"></ol>
-            </article>
+        <section class="report" id="report" aria-labelledby="report-title" hidden>
+            <div class="report-card" id="report-card">
+                <div class="report-topline"><div class="report-kicker">Kastro Labs // Hacker Movie Report</div><div class="report-stamp">share card ready</div></div>
+                <h2 id="report-title">Planet dramatically handled. Reality untouched.</h2>
+                <dl class="report-grid">
+                    <div><dt>Operator</dt><dd id="report-operator">GHOST PUFFIN</dd></div>
+                    <div><dt>Mission</dt><dd id="report-mission">Hack the Planet</dd></div>
+                    <div><dt>Method</dt><dd id="report-method">37% movie logic, 42% YAML, 21% caffeine</dd></div>
+                    <div><dt>Damage</dt><dd>0 packets harmed</dd></div>
+                    <div><dt>Verdict</dt><dd id="report-verdict">Stylish, harmless, non-compliant with reality.</dd></div>
+                </dl>
+                <p class="report-note">Actual security is consent, scope, evidence, remediation, and boring logs. This was the cinematic nonsense layer — suitable for screenshots, unsafe for taking seriously.</p>
+            </div>
+            <div class="report-actions">
+                <button id="copy-report" class="primary-button" type="button">Copy report</button>
+                <button id="new-run" type="button">Generate new run</button>
+                <a href="https://kastro.is" target="_blank" rel="noreferrer">What Kastro actually does</a>
+            </div>
         </section>
     </main>
-
-    <div class="movie-overlay" id="movie-overlay" aria-live="polite">
-        <div class="movie-card">
-            <p class="eyebrow">Cinematic simulation running</p>
-            <h2 id="movie-title">INITIALISING MAINFRAME THEATRE</h2>
-            <div class="movie-grid">
-                <div class="movie-orb"><canvas id="overlay-canvas" aria-hidden="true"></canvas><span id="overlay-count">3</span></div>
-                <div class="movie-log" id="movie-log"></div>
-            </div>
-            <p class="safety-line">Toy interface. No real targets. No packets harmed.</p>
-        </div>
-    </div>
-
-    <div class="breach-overlay" id="breach-overlay" aria-live="polite">
-        <div class="breach-card">
-            <p class="eyebrow">Hollywood ending</p>
-            <h2>Planet hacked. Reality untouched.</h2>
-            <p>The simulator staged a dramatic recon, fake password-cracker surge, plot firewall bypass, and fictional trophy screen. It did not contact, scan, crack, or compromise anything.</p>
-            <button id="close-breach" type="button">Return to OS</button>
-        </div>
-    </div>
 
     <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
     <script src="/js/main.js" defer></script>

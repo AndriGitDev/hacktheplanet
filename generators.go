@@ -71,7 +71,7 @@ var terminalCommands = []struct {
 	{"person enjoying a harmless Kastro Labs web toy", "output"},
 	{"$ download --file dramatic_pause.wav", "command"},
 	{"Transfer complete: 0 bytes. No packets harmed.", "success"},
-	{"$ scan --scope imagination --real-targets 0", "command"},
+	{"$ render --scope imagination --real-targets 0", "command"},
 	{"Fictional nodes discovered: %d. Actual networks touched: 0.", "output"},
 	{"$ compile --nonsense neon-mainframe", "command"},
 	{"Build result: screenshot-worthy chaos.", "success"},
@@ -156,7 +156,7 @@ var progressLabels = []string{
 	"SUMMONING DRAMATIC MODAL",
 	"AUDITING FAKE TERMINAL COPY",
 	"SPINNING EXECUTIVE CUBE",
-	"RESTORING WORKPLACE CREDIBILITY",
+	"RESTORING WORKPLACE PLAUSIBILITY",
 }
 
 func generateProgress(ctx context.Context, hub *Hub) {
