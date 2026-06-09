@@ -40,4 +40,7 @@ jobs:
         run: go build ./...
 
       - name: Static JavaScript syntax check
-        run: node --check static/js/main.js
+        run: |
+          for f in static/js/*.js; do
+            node --check "$f"
+          done
