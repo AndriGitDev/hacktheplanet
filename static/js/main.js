@@ -1,422 +1,412 @@
-(() => {
-    'use strict';
+// Hack the Planet — orchestrator.
+// boot → login → mission select → the run → access granted → debrief.
 
-    const $ = (selector) => document.querySelector(selector);
-    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+import {
+  BOOT_LINES, HANDLE_FIRST, HANDLE_LAST, MISSIONS, CHATTER, RANKS,
+  PROXY_CITIES, TRACED_EXCUSES,
+} from './data.js';
+import { Terminal, Cracker, Exfil } from './panels.js';
+import { WorldMap } from './worldmap.js';
+import { MatrixRain, flash, shake, scrambleIn, reducedMotion } from './fx.js';
+import { synth } from './audio.js';
 
-    const state = {
-        screen: 'boot',
-        missionKey: 'hack',
-        step: 0,
-        running: false,
-        logic: 0,
-        transcript: [],
-        operator: '',
-        particles: [],
-        t: 0,
-    };
+const $ = (sel) => document.querySelector(sel);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const pick = (arr) => arr[(Math.random() * arr.length) | 0];
 
-    const missions = {
-        hack: {
-            title: 'Hack the Planet',
-            code: 'HTP-01',
-            brief: 'Overthrow a prop mainframe with dramatic lighting and suspiciously fast typing.',
-            operatorPool: ['GHOST PUFFIN', 'NEON SKALD', 'NULL VIKING', 'CAPTAIN 2600', 'SUDO RAVEN'],
-            buttons: ['Acquire vibes', 'Route through movie logic', 'Deploy toy trick', 'Overclock mainframe', 'Hack the planet'],
-            steps: [
-                'Acquire mainframe vibes from a prop satellite.',
-                'Route through movie logic and three unnecessary maps.',
-                'Deploy a toy trick against the cinematic layer.',
-                'Overclock the fake mainframe until typography shakes.',
-                'Print trophy screen and spare reality from involvement.',
-            ],
-            readouts: [
-                'Mainframe vibes acquired.',
-                'Movie logic accepts the premise.',
-                'Toy trick failed successfully.',
-                'Planet vulnerable to dramatic lighting.',
-                'Planet hacked in fiction only.',
-            ],
-            method: '37% movie logic, 42% YAML, 21% Kastro yellow',
-            verdict: 'Stylish, harmless, aggressively non-compliant with reality.',
-        },
-        save: {
-            title: 'Save the Planet',
-            code: 'HTP-02',
-            brief: 'Patch the neon infrastructure before the montage becomes management policy.',
-            operatorPool: ['PATCH WIZARD', 'CONSENT BADGER', 'CAPTAIN SCOPE', 'LOG HERDER', 'CTRL ALT SHEEP'],
-            buttons: ['Open change window', 'Patch vibes', 'Rotate toy secrets', 'Document everything', 'Save the planet'],
-            steps: [
-                'Open an emergency change window in the imagination zone.',
-                'Patch vulnerable vibes before they become conference slides.',
-                'Rotate toy secrets that were never secrets to begin with.',
-                'Write a remediation note with suspiciously good margins.',
-                'Close the incident with zero real systems touched.',
-            ],
-            readouts: [
-                'Change window approved by movie logic.',
-                'Vibes patched. Neon stable.',
-                'Toy secrets rotated into confetti.',
-                'Boring logs save the day.',
-                'Planet saved in fiction only.',
-            ],
-            method: '51% patch notes, 29% consent, 20% dramatic restraint',
-            verdict: 'Heroic, documented, aggressively harmless.',
-        },
-        confuse: {
-            title: 'Confuse the Planet',
-            code: 'HTP-03',
-            brief: 'Deploy jazz, rubber ducks, malformed YAML, and one legally distinct trench coat.',
-            operatorPool: ['YAML GOBLIN', 'DUCK IN THE SHELL', 'JAZZ ROOT', 'BORK ORACLE', 'TRÖLLWARE INTERN'],
-            buttons: ['Summon duck', 'Inject jazz', 'Malformed YAML', 'Ask the trench coat', 'Confuse planet'],
-            steps: [
-                'Summon advisory rubber duck and wait for it to blink first.',
-                'Inject modal jazz into the soundtrack of the fake terminal.',
-                'Malformed YAML achieves sentience, then apologises.',
-                'Ask the trench coat if this is cyber enough.',
-                'Confuse the planet until it voluntarily enters safe mode.',
-            ],
-            readouts: [
-                'Duck has opinions.',
-                'Jazz accepted. Time signature unstable.',
-                'YAML indentation threatening discourse.',
-                'Trench coat says: probably.',
-                'Planet confused in fiction only.',
-            ],
-            method: '33% ducks, 33% jazz, 33% YAML, 1% governance',
-            verdict: 'Absurd, reversible, aesthetically suspicious.',
-        },
-    };
+const state = {
+  screen: 'boot',
+  handle: 'GHOST PUFFIN',
+  mission: null,
+  stage: 'idle',
+  keys: 0,
+  access: 0,
+  trace: 0,
+  tracePeak: 0,
+  startTime: 0,
+  runToken: 0, // bumped to cancel a run's async loops
+};
 
-    const els = {
-        bootPanel: $('#boot-panel'),
-        bootButton: $('#boot-button'),
-        missionSelect: $('#mission-select'),
-        stage: $('#stage'),
-        report: $('#report'),
-        ritualButton: $('#ritual-button'),
-        stageTitle: $('#stage-title'),
-        stageBrief: $('#stage-brief'),
-        missionCode: $('#mission-code'),
-        stepList: $('#step-list'),
-        logicMeter: $('#logic-meter'),
-        logicValue: $('#logic-value'),
-        readout: $('#planet-readout'),
-        terminal: $('#terminal'),
-        reportOperator: $('#report-operator'),
-        reportMission: $('#report-mission'),
-        reportMethod: $('#report-method'),
-        reportVerdict: $('#report-verdict'),
-        reportTitle: $('#report-title'),
-        copyReport: $('#copy-report'),
-        copyLog: $('#copy-log'),
-        newRun: $('#new-run'),
-        resetRun: $('#reset-run'),
-        toastStack: $('#toast-stack'),
-        clock: $('#clock'),
-    };
+const rain = new MatrixRain($('#rain'));
+const map = new WorldMap($('#map-canvas'));
+const term = new Terminal($('#terminal'));
+const cracker = new Cracker($('#crack-display'));
+const exfil = new Exfil($('#exfil-list'));
 
-    function show(screen) {
-        state.screen = screen;
-        els.bootPanel.hidden = screen !== 'boot';
-        els.missionSelect.hidden = screen !== 'missions';
-        els.stage.hidden = screen !== 'stage';
-        els.report.hidden = screen !== 'report';
-        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+// ---------------------------------------------------------------- screens
+
+function show(name) {
+  state.screen = name;
+  document.querySelectorAll('.screen').forEach((s) => {
+    s.classList.toggle('active', s.id === `screen-${name}`);
+  });
+  if (name === 'run') {
+    map.resize();
+    map.start();
+  } else {
+    map.stop();
+  }
+}
+
+// ------------------------------------------------------------------ boot
+
+async function boot() {
+  show('boot');
+  rain.start();
+  const log = $('#boot-log');
+  log.innerHTML = '';
+  let skipped = false;
+  const skip = () => { skipped = true; };
+  window.addEventListener('keydown', skip, { once: true });
+  window.addEventListener('pointerdown', skip, { once: true });
+
+  for (const line of BOOT_LINES) {
+    const div = document.createElement('div');
+    div.textContent = line.t;
+    log.appendChild(div);
+    synth.beep();
+    if (!skipped) await sleep(reducedMotion ? 40 : line.d);
+  }
+  window.removeEventListener('keydown', skip);
+  window.removeEventListener('pointerdown', skip);
+  await sleep(skipped ? 150 : 600);
+  login();
+}
+
+// ----------------------------------------------------------------- login
+
+function randomHandle() {
+  return `${pick(HANDLE_FIRST)} ${pick(HANDLE_LAST)}`;
+}
+
+function login() {
+  show('login');
+  const input = $('#handle-input');
+  input.value = '';
+  input.placeholder = randomHandle();
+  setTimeout(() => input.focus(), 50);
+}
+
+function submitHandle() {
+  const input = $('#handle-input');
+  const raw = (input.value || input.placeholder).trim().toUpperCase();
+  state.handle = raw.slice(0, 24) || 'GHOST PUFFIN';
+  synth.beep();
+  missions();
+}
+
+// -------------------------------------------------------------- missions
+
+function missions() {
+  show('missions');
+  $('#missions-greeting').textContent = `WELCOME, ${state.handle}.`;
+  const grid = $('#mission-grid');
+  if (grid.childElementCount) return;
+  for (const m of MISSIONS) {
+    const card = document.createElement('button');
+    card.className = 'mission-card';
+    card.type = 'button';
+    card.innerHTML =
+      `<span class="m-threat">${'▰'.repeat(m.threat)}${'▱'.repeat(5 - m.threat)} THREAT</span>` +
+      `<strong>${m.name}</strong>` +
+      `<em>${m.tagline}</em>` +
+      `<p>${m.brief}</p>` +
+      `<span class="m-host">${m.host} · ${m.ip}</span>`;
+    card.addEventListener('click', () => startRun(m));
+    grid.appendChild(card);
+  }
+}
+
+// ----------------------------------------------------------------- input
+
+// Any key (or tap on the mash button) is a "hack keystroke" during the run.
+function onHackKey(e) {
+  if (state.screen !== 'run') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Escape') return;
+  if (e.key && e.key.length > 1 && e.key !== 'Enter' && e.key !== 'Backspace' && e.key !== 'Tab') return;
+  if (e.key === ' ' || e.key === 'Tab') e.preventDefault();
+  registerKeystroke();
+}
+
+function registerKeystroke() {
+  const s = state.stage;
+  if (!['inject', 'firewall', 'crack', 'exfil'].includes(s)) return;
+  state.keys += 1;
+  synth.key();
+  term.emitCode(3);
+
+  if (s === 'inject') {
+    setAccess(state.access + 0.8);
+    if (state.keys % 14 === 0) term.line(`>> ${pick(CHATTER.inject)}`);
+  } else if (s === 'firewall') {
+    setTrace(state.trace - 2.4);
+    setAccess(state.access + 0.12);
+  } else if (s === 'crack') {
+    setAccess(Math.min(80, state.access + 0.1));
+  } else if (s === 'exfil') {
+    exfil.boost();
+    setAccess(Math.min(99, state.access + 0.25));
+    if (state.keys % 18 === 0) term.line(`>> ${pick(CHATTER.exfil)}`);
+  }
+}
+
+window.addEventListener('keydown', onHackKey);
+$('#mash').addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  registerKeystroke();
+});
+
+// ---------------------------------------------------------------- meters
+
+function setAccess(v) {
+  state.access = Math.max(0, Math.min(100, v));
+  $('#access-bar').style.width = `${state.access}%`;
+  $('#access-pct').textContent = `${Math.floor(state.access)}%`;
+}
+
+function setTrace(v) {
+  state.trace = Math.max(0, Math.min(100, v));
+  state.tracePeak = Math.max(state.tracePeak, state.trace);
+  $('#trace-bar').style.width = `${state.trace}%`;
+  $('#trace-pct').textContent = `${Math.floor(state.trace)}%`;
+}
+
+function setStage(stage, label, hint) {
+  state.stage = stage;
+  $('#stage-label').textContent = label;
+  $('#hint').textContent = hint;
+}
+
+function setAlarm(on) {
+  document.body.classList.toggle('alarm', on);
+  map.setAlarm(on);
+  rain.setAlarm(on);
+}
+
+// ------------------------------------------------------------------ run
+
+function buildRoute(mission) {
+  const target = PROXY_CITIES.find((c) => c.name === mission.city) ||
+    { name: mission.city, lat: 47.4, lng: 8.5 };
+  const hops = PROXY_CITIES
+    .filter((c) => c.name !== target.name)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 5);
+  return [...hops, target];
+}
+
+async function startRun(mission) {
+  state.mission = mission;
+  state.keys = 0;
+  state.tracePeak = 0;
+  state.startTime = performance.now();
+  const token = ++state.runToken;
+
+  show('run');
+  setAlarm(false);
+  setAccess(0);
+  setTrace(0);
+  term.clear();
+  cracker.idle();
+  exfil.load(mission.files);
+  $('#run-target').textContent = `${mission.name} · ${mission.host} · ${mission.ip}`;
+  $('#run-operator').textContent = `OPERATOR: ${state.handle}`;
+
+  const route = buildRoute(mission);
+  map.setRoute(route);
+
+  // STAGE 1 — connect: the proxy chain assembles itself for drama.
+  setStage('connect', 'STAGE 1/5 · UPLINK', 'establishing proxy chain…');
+  await term.typeLine(`$ uplink --target ${mission.host} (${mission.ip}) --drama max`, 'cmd');
+  for (let i = 0; i < route.length - 1; i++) {
+    if (token !== state.runToken) return;
+    await sleep(reducedMotion ? 80 : 650);
+    map.revealNextHop();
+    synth.hop();
+    term.line(`   hop ${i + 1}/${route.length - 1} ➜ ${route[i + 1].name} [encrypted, fictional]`);
+  }
+  await sleep(400);
+  if (token !== state.runToken) return;
+  term.line('>> PROXY CHAIN ESTABLISHED. You are everywhere and nowhere.', 'good');
+
+  // STAGE 2 — inject: the keyboard becomes the weapon.
+  setStage('inject', 'STAGE 2/5 · INJECT', 'TYPE ANYTHING — any keys work. seriously, mash.');
+  term.line('>> START TYPING TO INJECT CODE. The mainframe cannot tell the difference.', 'good');
+  while (state.access < 45) {
+    if (token !== state.runToken) return;
+    await sleep(120);
+  }
+
+  // STAGE 3 — firewall counterattack: survive the trace.
+  const survived = await firewallBattle(token);
+  if (token !== state.runToken) return;
+  if (!survived) return traced();
+
+  // STAGE 4 — crack the password.
+  setStage('crack', 'STAGE 3/5 · CRACK', 'brute-forcing… keep typing for style points');
+  term.line('$ crack --wordlist classics.txt --style "one glowing character at a time"', 'cmd');
+  await cracker.run(mission.password, reducedMotion ? 800 : 5200, () => synth.crack());
+  if (token !== state.runToken) return;
+  flash('rgba(57,255,20,0.18)');
+  term.line(`>> PASSWORD ACCEPTED: "${mission.password}"`, 'good');
+  term.line(`   ${mission.passwordJoke}`);
+  await sleep(900);
+
+  // STAGE 5 — exfil.
+  setStage('exfil', 'STAGE 4/5 · EXFIL', 'keep typing — every keystroke pulls files faster');
+  term.line('$ exfil --everything --gently', 'cmd');
+  await new Promise((resolve) => exfil.start(resolve));
+  if (token !== state.runToken) return;
+  setAccess(100);
+  granted();
+}
+
+async function firewallBattle(token) {
+  setStage('firewall', 'STAGE !/5 · FIREWALL', 'COUNTERATTACK! TYPE FASTER TO BEAT THE TRACE!');
+  setAlarm(true);
+  synth.alarm();
+  flash('rgba(255,45,85,0.3)');
+  shake();
+  term.line(`!! ${pick(CHATTER.firewall)}`, 'bad');
+
+  const duration = reducedMotion ? 3000 : 7500;
+  const start = performance.now();
+  let lastAlarm = 0;
+  while (performance.now() - start < duration) {
+    if (token !== state.runToken) return false;
+    // Idle hands get traced in ~5.5s; steady mashing holds the line.
+    setTrace(state.trace + 1.75);
+    if (state.trace >= 100) {
+      setAlarm(false);
+      return false;
     }
-
-    function toast(message) {
-        const item = document.createElement('div');
-        item.className = 'toast';
-        item.textContent = message;
-        els.toastStack.appendChild(item);
-        setTimeout(() => item.remove(), 4200);
+    const now = performance.now();
+    if (now - lastAlarm > 1300) {
+      synth.alarm();
+      term.line(`!! ${pick(CHATTER.firewall)}`, 'bad');
+      lastAlarm = now;
     }
+    await sleep(95);
+  }
+  setAlarm(false);
+  flash('rgba(57,255,20,0.2)');
+  term.line('>> FIREWALL DOWN. The black ice melts politely.', 'good');
+  // Residual heat bleeds off.
+  const decay = setInterval(() => {
+    setTrace(state.trace - 4);
+    if (state.trace <= 0) clearInterval(decay);
+  }, 100);
+  return true;
+}
 
-    function log(text, className = '') {
-        const line = document.createElement('div');
-        line.className = `term-line ${className}`.trim();
-        line.textContent = text;
-        els.terminal.appendChild(line);
-        els.terminal.scrollTop = els.terminal.scrollHeight;
-        state.transcript.push(text);
-    }
+// --------------------------------------------------------------- endings
 
-    function pick(array) { return array[Math.floor(Math.random() * array.length)]; }
+async function granted() {
+  setStage('granted', 'STAGE 5/5 · IN', '');
+  synth.granted();
+  flash('rgba(57,255,20,0.45)', 500);
+  show('splash');
+  scrambleIn($('#splash-title'), 'ACCESS GRANTED');
+  $('#splash-sub').textContent = state.mission.victory;
+  await sleep(reducedMotion ? 1200 : 3200);
+  debrief();
+}
 
-    function currentMission() { return missions[state.missionKey]; }
+function traced() {
+  state.stage = 'traced';
+  exfil.stop();
+  cracker.stop();
+  synth.traced();
+  flash('rgba(255,45,85,0.5)', 600);
+  shake();
+  show('traced');
+  $('#traced-excuse').textContent = pick(TRACED_EXCUSES);
+}
 
-    function setLogic(value) {
-        state.logic = Math.max(0, Math.min(100, value));
-        els.logicMeter.style.width = `${state.logic}%`;
-        els.logicValue.textContent = `${Math.round(state.logic)}%`;
-    }
+function debrief() {
+  const secs = (performance.now() - state.startTime) / 1000;
+  const kps = state.keys / Math.max(1, secs);
+  const rank = [...RANKS].reverse().find((r) => kps >= r.minKps) || RANKS[0];
+  const m = state.mission;
 
-    function renderSteps() {
-        const mission = currentMission();
-        els.stepList.innerHTML = mission.steps.map((step, index) => {
-            const status = index < state.step ? 'done' : index === state.step ? 'active' : '';
-            return `<li class="${status}" data-index="${String(index + 1).padStart(2, '0')}">${step}</li>`;
-        }).join('');
-    }
+  show('debrief');
+  $('#r-operator').textContent = state.handle;
+  $('#r-target').textContent = `${m.name} (${m.host})`;
+  $('#r-time').textContent = `${secs.toFixed(1)}s`;
+  $('#r-keys').textContent = `${state.keys} (${kps.toFixed(1)}/sec)`;
+  $('#r-trace').textContent = `${Math.floor(state.tracePeak)}% — ${state.tracePeak >= 85 ? 'uncomfortably close' : state.tracePeak >= 50 ? 'spicy' : 'they never got close'}`;
+  $('#r-rank').textContent = rank.name;
+  $('#r-ranknote').textContent = rank.note;
+  $('#r-victory').textContent = m.victorySub;
+}
 
-    function setButtonText() {
-        const mission = currentMission();
-        const text = mission.buttons[Math.min(state.step, mission.buttons.length - 1)];
-        els.ritualButton.querySelector('span').textContent = text;
-    }
+function reportText() {
+  const m = state.mission;
+  return [
+    '=== HACK THE PLANET · MISSION REPORT ===',
+    `operator ......... ${state.handle}`,
+    `target ........... ${m.name} (${m.host}) [fictional]`,
+    `result ........... ${m.victory}`,
+    `keystrokes ....... ${$('#r-keys').textContent}`,
+    `trace peak ....... ${$('#r-trace').textContent}`,
+    `rank ............. ${$('#r-rank').textContent}`,
+    'packets harmed ... 0',
+    '',
+    'simulated at https://htp.kastro.is — a harmless toy by Kastro Labs',
+  ].join('\n');
+}
 
-    function startMission(key) {
-        state.missionKey = key;
-        state.step = 0;
-        state.logic = 0;
-        state.running = false;
-        state.transcript = [];
-        const mission = currentMission();
-        state.operator = pick(mission.operatorPool);
+// ------------------------------------------------------------- boss mode
 
-        els.stageTitle.textContent = mission.title;
-        els.stageBrief.textContent = mission.brief;
-        els.missionCode.textContent = mission.code;
-        els.readout.textContent = 'Awaiting operator ritual.';
-        els.terminal.innerHTML = '';
-        setLogic(0);
-        renderSteps();
-        setButtonText();
-        show('stage');
-        log(`KASTRO LABS // ${mission.code} // REALITY LOCK GREEN`, 'warn');
-        log(`operator = ${state.operator}`, 'bone');
-        log('network_io = 0; packets_harmed = 0; crimes = 0', 'muted');
-        log(`mission = ${mission.title}`);
-        toast(`${mission.title} loaded. Big yellow button armed.`);
-    }
+function toggleBoss() {
+  document.body.classList.toggle('boss');
+}
 
-    function performStep() {
-        if (state.running) return;
-        const mission = currentMission();
-        if (state.step >= mission.steps.length) return finishRun();
+// --------------------------------------------------------------- wiring
 
-        state.running = true;
-        document.body.classList.add('simulation-running');
-        els.ritualButton.disabled = true;
-        const stepIndex = state.step;
-        const command = mission.buttons[stepIndex].toLowerCase().replaceAll(' ', '-');
-        log(`> ${command}`, 'warn');
-        els.readout.textContent = mission.readouts[stepIndex];
-        toast(mission.readouts[stepIndex]);
+$('#btn-login').addEventListener('click', submitHandle);
+$('#handle-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitHandle();
+});
+$('#btn-random').addEventListener('click', () => {
+  $('#handle-input').value = randomHandle();
+  synth.beep();
+});
 
-        const bursts = [
-            'rendering local pixels; no sockets opened',
-            'cinematic layer responding with unnecessary confidence',
-            'dramatic typing synthesised in memory',
-            'reality lock remains green',
-        ];
-        bursts.forEach((line, index) => {
-            setTimeout(() => log(`  ${line}`, index === 3 ? 'muted' : ''), 170 + index * 180);
-        });
+$('#btn-retry').addEventListener('click', () => startRun(state.mission));
+$('#btn-abort').addEventListener('click', () => { state.runToken++; missions(); });
+$('#btn-replay').addEventListener('click', () => startRun(state.mission));
+$('#btn-newtarget').addEventListener('click', () => { state.runToken++; missions(); });
+$('#btn-copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(reportText());
+    $('#btn-copy').textContent = 'COPIED ✓';
+    setTimeout(() => { $('#btn-copy').textContent = 'COPY REPORT'; }, 1600);
+  } catch {
+    $('#btn-copy').textContent = 'CLIPBOARD BLOCKED';
+  }
+});
 
-        setTimeout(() => {
-            state.step += 1;
-            setLogic((state.step / mission.steps.length) * 100);
-            renderSteps();
-            state.running = false;
-            document.body.classList.remove('simulation-running');
-            els.ritualButton.disabled = false;
-            if (state.step >= mission.steps.length) {
-                setButtonText();
-                finishRun();
-            } else {
-                setButtonText();
-            }
-        }, 930);
-    }
+$('#btn-sound').addEventListener('click', () => {
+  const on = synth.toggle();
+  $('#btn-sound').textContent = on ? 'SOUND: ON' : 'SOUND: OFF';
+  if (on) synth.beep();
+});
 
-    function finishRun() {
-        const mission = currentMission();
-        state.step = mission.steps.length;
-        setLogic(100);
-        renderSteps();
-        els.readout.textContent = `${mission.title}: complete. Reality untouched.`;
-        log('> print-hacker-movie-report', 'warn');
-        log('RESULT: planet dramatically handled in fiction only', 'bone');
-        log('DAMAGE: 0 packets harmed', 'muted');
-        els.reportOperator.textContent = state.operator;
-        els.reportMission.textContent = mission.title;
-        els.reportMethod.textContent = mission.method;
-        els.reportVerdict.textContent = mission.verdict;
-        els.reportTitle.textContent = `${mission.title} complete. Reality untouched.`;
-        els.toastStack.innerHTML = '';
-        setTimeout(() => show('report'), 760);
-    }
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') toggleBoss();
+});
+$('#boss').addEventListener('click', toggleBoss);
 
-    function resetAll() {
-        state.step = 0;
-        state.logic = 0;
-        state.running = false;
-        state.transcript = [];
-        show('boot');
-        toast('Cabinet reset. Reality still safe. Obviously.');
-    }
+setInterval(() => {
+  const now = new Date();
+  $('#clock').textContent = `${now.toISOString().slice(11, 19)} UTC`;
+}, 1000);
 
-    function reportText() {
-        const mission = currentMission();
-        return [
-            '⚡ Kastro Labs // Hacker Movie Report ⚡',
-            `Operator: ${state.operator}`,
-            `Mission: ${mission.title}`,
-            `Method: ${mission.method}`,
-            'Damage: 0 packets harmed · 0 real targets · 0 crimes',
-            `Verdict: ${mission.verdict}`,
-            'Note: This was a harmless browser toy and screenshot ritual. No real targets, packets, secrets, or systems were touched.',
-        ].join('\n');
-    }
+// ------------------------------------------------------------------ go
 
-    async function copyText(text, success) {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast(success);
-        } catch (err) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            ta.remove();
-            toast(success);
-        }
-    }
-
-    function sizeCanvas(canvas) {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = Math.min(2, window.devicePixelRatio || 1);
-        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-        const ctx = canvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        return { ctx, width: rect.width, height: rect.height };
-    }
-
-    function seedParticles() {
-        state.particles = Array.from({ length: 140 }, () => ({
-            x: Math.random(),
-            y: Math.random(),
-            s: .4 + Math.random() * 2.3,
-            v: .18 + Math.random() * .88,
-            h: Math.random(),
-        }));
-    }
-
-    function drawAtmosphere() {
-        const canvas = $('#atmosphere');
-        const { ctx, width, height } = sizeCanvas(canvas);
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = 'rgba(0,0,0,.08)';
-        ctx.fillRect(0, 0, width, height);
-        ctx.font = '13px ui-monospace, monospace';
-        state.particles.forEach((p, index) => {
-            p.y += p.v / Math.max(500, height);
-            if (p.y > 1.05) { p.y = -.05; p.x = Math.random(); }
-            const glyph = index % 17 === 0 ? 'HTP' : index % 11 === 0 ? '0' : index % 7 === 0 ? '1' : '·';
-            ctx.fillStyle = index % 9 === 0 ? 'rgba(255,212,0,.45)' : 'rgba(124,255,139,.25)';
-            ctx.fillText(glyph, p.x * width, p.y * height);
-        });
-        requestAnimationFrame(drawAtmosphere);
-    }
-
-    function drawPlanet() {
-        const canvas = $('#planet-canvas');
-        const { ctx, width, height } = sizeCanvas(canvas);
-        state.t += .018;
-        ctx.clearRect(0, 0, width, height);
-
-        const cx = width / 2;
-        const cy = height / 2;
-        const r = Math.min(width, height) * .235;
-        const mission = currentMission();
-        const pulse = 1 + Math.sin(state.t * 4) * .025 + state.logic / 1000;
-
-        ctx.fillStyle = '#050505';
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.strokeStyle = 'rgba(255,212,0,.18)';
-        ctx.lineWidth = 1;
-        for (let x = -40; x < width + 40; x += 42) {
-            ctx.beginPath(); ctx.moveTo(x + Math.sin(state.t + x) * 8, 0); ctx.lineTo(x - 60, height); ctx.stroke();
-        }
-        for (let y = 28; y < height; y += 42) {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y + Math.sin(state.t + y) * 8); ctx.stroke();
-        }
-
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(pulse, pulse);
-        ctx.strokeStyle = 'rgba(247,240,216,.28)';
-        ctx.lineWidth = 2;
-        for (let i = -4; i <= 4; i += 1) {
-            ctx.beginPath();
-            ctx.ellipse(0, 0, r, Math.max(3, Math.abs(r * i / 4)), state.t * .65, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-        for (let i = 0; i < 9; i += 1) {
-            const a = state.t * .7 + i * Math.PI / 9;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, Math.abs(Math.cos(a)) * r, r, 0, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-        ctx.strokeStyle = '#ffd400';
-        ctx.shadowColor = '#ffd400';
-        ctx.shadowBlur = 20;
-        ctx.lineWidth = 3;
-        const arcs = 4 + Math.floor(state.logic / 18);
-        for (let i = 0; i < arcs; i += 1) {
-            const a = state.t * (1.2 + i * .03) + i * .86;
-            const x1 = Math.cos(a) * r * .92;
-            const y1 = Math.sin(a * 1.4) * r * .52;
-            const x2 = Math.cos(a + 1.4) * r * .92;
-            const y2 = Math.sin((a + 1.4) * 1.4) * r * .52;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.quadraticCurveTo(Math.sin(a) * r * .35, -r * 1.15, x2, y2);
-            ctx.stroke();
-        }
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = state.logic >= 100 ? '#7cff8b' : '#ffd400';
-        ctx.beginPath();
-        ctx.arc(0, 0, Math.max(8, r * .08 + state.logic * .11), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        ctx.fillStyle = '#ffd400';
-        ctx.font = '900 12px ui-monospace, monospace';
-        ctx.fillText(`${mission.code} // ${mission.title.toUpperCase()}`, 18, height - 74);
-        ctx.fillStyle = 'rgba(247,240,216,.72)';
-        ctx.fillText('REAL TARGETS: 0', 18, height - 52);
-        ctx.fillText('PACKETS HARMED: 0', 18, height - 32);
-        requestAnimationFrame(drawPlanet);
-    }
-
-    function tickClock() {
-        els.clock.textContent = `${new Date().toLocaleTimeString('en-GB', { timeZone: 'UTC', hour12: false })} UTC`;
-    }
-
-    function initEvents() {
-        els.bootButton.addEventListener('click', () => { show('missions'); toast('Toy mainframe booted. Pick your fiction.'); });
-        $$('.mission-card').forEach((card) => card.addEventListener('click', () => startMission(card.dataset.mission)));
-        els.ritualButton.addEventListener('click', performStep);
-        els.copyReport.addEventListener('click', () => copyText(reportText(), 'Report copied. Use irresponsibly only in fiction.'));
-        els.copyLog.addEventListener('click', () => copyText(state.transcript.join('\n'), 'Operator transcript copied.'));
-        els.newRun.addEventListener('click', () => { show('missions'); toast('Run archived in imagination. Choose again.'); });
-        els.resetRun.addEventListener('click', resetAll);
-    }
-
-    function init() {
-        seedParticles();
-        initEvents();
-        tickClock();
-        setInterval(tickClock, 1000);
-        drawAtmosphere();
-        drawPlanet();
-    }
-
-    init();
+(async function init() {
+  await map.load().catch(() => {}); // map is decorative; never block the show
+  boot();
 })();

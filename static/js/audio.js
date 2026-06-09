@@ -1,64 +1,69 @@
-let audioCtx = null;
-let enabled = false;
+// Synth sound effects via WebAudio. No samples, no network, off by default.
 
-function ensureContext() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
+class Synth {
+  constructor() {
+    this.ctx = null;
+    this.enabled = false;
+  }
+
+  toggle() {
+    this.enabled = !this.enabled;
+    if (this.enabled && !this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    return audioCtx;
+    if (this.enabled) this.ctx.resume();
+    return this.enabled;
+  }
+
+  tone({ freq = 440, type = 'square', dur = 0.06, gain = 0.04, slide = 0 }) {
+    if (!this.enabled || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t + dur);
+    g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g).connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+
+  // Quiet blip per keystroke, pitch wanders so it sounds alive.
+  key() {
+    this.tone({ freq: 700 + Math.random() * 700, dur: 0.035, gain: 0.022 });
+  }
+
+  beep() {
+    this.tone({ freq: 980, dur: 0.08, gain: 0.04 });
+  }
+
+  alarm() {
+    this.tone({ freq: 880, type: 'sawtooth', dur: 0.18, gain: 0.05, slide: -440 });
+  }
+
+  hop() {
+    this.tone({ freq: 520, type: 'triangle', dur: 0.1, gain: 0.05, slide: 260 });
+  }
+
+  crack() {
+    this.tone({ freq: 1400 + Math.random() * 400, type: 'square', dur: 0.05, gain: 0.035 });
+  }
+
+  granted() {
+    if (!this.enabled || !this.ctx) return;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      setTimeout(() => this.tone({ freq: f, type: 'triangle', dur: 0.35, gain: 0.06 }), i * 110);
+    });
+  }
+
+  traced() {
+    if (!this.enabled || !this.ctx) return;
+    [392, 311, 233].forEach((f, i) => {
+      setTimeout(() => this.tone({ freq: f, type: 'sawtooth', dur: 0.3, gain: 0.05 }), i * 160);
+    });
+  }
 }
 
-export function isEnabled() {
-    return enabled;
-}
-
-export function toggle() {
-    enabled = !enabled;
-    if (enabled) ensureContext();
-    return enabled;
-}
-
-export function beep(freq = 440, duration = 0.08, vol = 0.1) {
-    if (!enabled) return;
-    const ctx = ensureContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(vol, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
-}
-
-export function keyclick() {
-    if (!enabled) return;
-    const ctx = ensureContext();
-    const bufferSize = ctx.sampleRate * 0.02;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.1));
-    }
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    const gain = ctx.createGain();
-    gain.gain.value = 0.03;
-    source.connect(gain);
-    gain.connect(ctx.destination);
-    source.start();
-}
-
-export function alertSound(severity) {
-    if (!enabled) return;
-    if (severity === 'critical') {
-        beep(880, 0.15, 0.15);
-        setTimeout(() => beep(660, 0.15, 0.15), 150);
-    } else if (severity === 'warning') {
-        beep(660, 0.1, 0.1);
-    } else {
-        beep(440, 0.06, 0.05);
-    }
-}
+export const synth = new Synth();

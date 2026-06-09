@@ -1,246 +1,229 @@
-// World map using real TopoJSON geographic data
-// Includes a minimal inline TopoJSON decoder (no dependencies)
+// Canvas world map with animated proxy-chain arcs.
+// Decodes the bundled TopoJSON (land-110m) by hand — no libraries.
 
-export function initWorldMap(canvas) {
-    const ctx = canvas.getContext('2d');
-    let w = 0, h = 0;
-    const connections = [];
-    const cityDots = [];
-    let frame = 0;
-    let landPolygons = []; // will be filled from TopoJSON
+function decodeTopology(topo) {
+  const { scale, translate } = topo.transform;
+  const arcs = topo.arcs.map((arc) => {
+    let x = 0;
+    let y = 0;
+    return arc.map(([dx, dy]) => {
+      x += dx;
+      y += dy;
+      return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
+    });
+  });
 
-    function resize() {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        const header = canvas.parentElement.querySelector('.panel-header');
-        const headerH = header ? header.offsetHeight : 0;
-        w = rect.width;
-        h = rect.height - headerH;
-        canvas.width = w;
-        canvas.height = h;
-        canvas.style.marginTop = headerH + 'px';
+  const rings = [];
+  for (const geom of topo.objects.land.geometries) {
+    const polys = geom.type === 'Polygon' ? [geom.arcs] : geom.arcs;
+    for (const poly of polys) {
+      for (const ringArcs of poly) {
+        const ring = [];
+        for (const idx of ringArcs) {
+          const arc = idx >= 0 ? arcs[idx] : arcs[~idx].slice().reverse();
+          // Consecutive arcs share an endpoint; skip the duplicate.
+          ring.push(...(ring.length ? arc.slice(1) : arc));
+        }
+        rings.push(ring);
+      }
+    }
+  }
+  return rings;
+}
+
+export class WorldMap {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.rings = null;
+    this.base = null; // offscreen land render
+    this.route = [];
+    this.revealed = 0; // how many hops are lit
+    this.revealStart = 0; // timestamp the latest hop started drawing
+    this.alarm = false;
+    this.running = false;
+    this._resize = () => this.resize();
+    window.addEventListener('resize', this._resize);
+  }
+
+  async load() {
+    const res = await fetch('/data/land-110m.json');
+    this.rings = decodeTopology(await res.json());
+    this.resize();
+  }
+
+  // Equirectangular projection into the canvas, slightly cropped at the
+  // poles where there is nothing but drama anyway.
+  project(lng, lat) {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    return [((lng + 180) / 360) * w, ((76 - lat) / 152) * h];
+  }
+
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    this.canvas.width = Math.round(rect.width * dpr);
+    this.canvas.height = Math.round(rect.height * dpr);
+    this.renderBase();
+  }
+
+  renderBase() {
+    if (!this.rings) return;
+    const { width: w, height: h } = this.canvas;
+    this.base = document.createElement('canvas');
+    this.base.width = w;
+    this.base.height = h;
+    const ctx = this.base.getContext('2d');
+
+    // Graticule
+    ctx.strokeStyle = 'rgba(57, 255, 20, 0.07)';
+    ctx.lineWidth = 1;
+    for (let lng = -180; lng <= 180; lng += 30) {
+      const [x] = this.project(lng, 0);
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let lat = -60; lat <= 60; lat += 30) {
+      const [, y] = this.project(0, lat);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
     }
 
-    resize();
-    new ResizeObserver(resize).observe(canvas.parentElement);
-
-    function toXY(lng, lat) {
-        return [((lng + 180) / 360) * w, ((90 - lat) / 180) * h];
+    // Landmasses
+    ctx.strokeStyle = 'rgba(57, 255, 20, 0.55)';
+    ctx.fillStyle = 'rgba(57, 255, 20, 0.08)';
+    ctx.lineWidth = Math.max(1, w / 900);
+    for (const ring of this.rings) {
+      ctx.beginPath();
+      ring.forEach(([lng, lat], i) => {
+        const [x, y] = this.project(lng, lat);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     }
+  }
 
-    // --- Minimal TopoJSON decoder ---
-    function decodeTopojson(topo) {
-        const transform = topo.transform;
-        const arcs = topo.arcs.map(arc => {
-            let x = 0, y = 0;
-            return arc.map(p => {
-                x += p[0]; y += p[1];
-                if (transform) {
-                    return [
-                        x * transform.scale[0] + transform.translate[0],
-                        x * transform.scale[1] + transform.translate[1]
-                    ];
-                }
-                return [x, y];
-            });
-        });
+  setRoute(cities) {
+    this.route = cities;
+    this.revealed = 0;
+  }
 
-        // properly decode with transform
-        if (transform) {
-            const sx = transform.scale[0], sy = transform.scale[1];
-            const tx = transform.translate[0], ty = transform.translate[1];
-            topo.arcs.forEach((arc, ai) => {
-                let x = 0, y = 0;
-                arcs[ai] = arc.map(p => {
-                    x += p[0]; y += p[1];
-                    return [x * sx + tx, y * sy + ty];
-                });
-            });
-        }
-
-        function resolveArc(idx) {
-            if (idx >= 0) return arcs[idx];
-            return [...arcs[~idx]].reverse();
-        }
-
-        function resolveRing(indices) {
-            let coords = [];
-            for (const idx of indices) {
-                const arc = resolveArc(idx);
-                // skip first point of subsequent arcs (shared with previous arc's last point)
-                coords = coords.concat(coords.length === 0 ? arc : arc.slice(1));
-            }
-            return coords;
-        }
-
-        const polygons = [];
-        const geom = topo.objects.land;
-        for (const g of geom.geometries) {
-            if (g.type === 'Polygon') {
-                for (const ring of g.arcs) {
-                    polygons.push(resolveRing(ring));
-                }
-            } else if (g.type === 'MultiPolygon') {
-                for (const poly of g.arcs) {
-                    for (const ring of poly) {
-                        polygons.push(resolveRing(ring));
-                    }
-                }
-            }
-        }
-        return polygons;
+  revealNextHop() {
+    if (this.revealed < this.route.length - 1) {
+      this.revealed += 1;
+      this.revealStart = performance.now();
     }
+  }
 
-    // Load map data
-    fetch('/data/land-110m.json')
-        .then(r => r.json())
-        .then(topo => {
-            landPolygons = decodeTopojson(topo);
-        })
-        .catch(e => console.error('Failed to load map data:', e));
+  revealAll() {
+    this.revealed = Math.max(0, this.route.length - 1);
+    this.revealStart = 0;
+  }
 
-    function drawMap() {
-        frame++;
-        ctx.clearRect(0, 0, w, h);
+  setAlarm(on) {
+    this.alarm = on;
+  }
 
-        // grid
-        ctx.strokeStyle = 'rgba(0,255,65,0.04)';
-        ctx.lineWidth = 0.5;
-        for (let i = 0; i <= 18; i++) {
-            const x = (i / 18) * w;
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-        }
-        for (let i = 0; i <= 9; i++) {
-            const y = (i / 9) * h;
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-        }
-
-        // equator
-        ctx.setLineDash([4, 8]);
-        ctx.strokeStyle = 'rgba(0,255,65,0.06)';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
-        ctx.setLineDash([]);
-
-        // draw land polygons from TopoJSON
-        if (landPolygons.length > 0) {
-            // fill
-            ctx.fillStyle = 'rgba(0,255,65,0.04)';
-            for (const poly of landPolygons) {
-                ctx.beginPath();
-                for (let i = 0; i < poly.length; i++) {
-                    const [x, y] = toXY(poly[i][0], poly[i][1]);
-                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.fill();
-            }
-
-            // glow edge
-            ctx.strokeStyle = 'rgba(0,255,65,0.08)';
-            ctx.lineWidth = 3;
-            for (const poly of landPolygons) {
-                ctx.beginPath();
-                for (let i = 0; i < poly.length; i++) {
-                    const [x, y] = toXY(poly[i][0], poly[i][1]);
-                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.stroke();
-            }
-
-            // sharp edge
-            ctx.strokeStyle = 'rgba(0,255,65,0.3)';
-            ctx.lineWidth = 0.8;
-            for (const poly of landPolygons) {
-                ctx.beginPath();
-                for (let i = 0; i < poly.length; i++) {
-                    const [x, y] = toXY(poly[i][0], poly[i][1]);
-                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.stroke();
-            }
-        }
-
-        // city dots
-        for (let i = cityDots.length - 1; i >= 0; i--) {
-            const cd = cityDots[i];
-            cd.age++;
-            if (cd.age > 600) { cityDots.splice(i, 1); continue; }
-            const alpha = cd.age > 500 ? (600 - cd.age) / 100 : 1;
-            const r = 2.5 + Math.sin(frame * 0.05 + cd.phase) * 1;
-
-            ctx.fillStyle = `rgba(0,229,255,${0.7 * alpha})`;
-            ctx.shadowColor = '#00e5ff';
-            ctx.shadowBlur = 8;
-            ctx.beginPath(); ctx.arc(cd.x, cd.y, r, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
-
-            const rr = r + 4 + Math.sin(frame * 0.03 + cd.phase) * 2;
-            ctx.strokeStyle = `rgba(0,229,255,${0.15 * alpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath(); ctx.arc(cd.x, cd.y, rr, 0, Math.PI * 2); ctx.stroke();
-        }
-
-        // connections
-        for (let i = connections.length - 1; i >= 0; i--) {
-            const c = connections[i];
-            c.progress += 0.012;
-            if (c.progress > 1.8) { connections.splice(i, 1); continue; }
-
-            const [x1, y1] = c.src;
-            const [x2, y2] = c.dst;
-            const dist = Math.hypot(x2 - x1, y2 - y1);
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2 - dist * 0.15;
-            const alpha = c.progress > 1 ? Math.max(0, 1 - (c.progress - 1) * 1.25) : Math.min(1, c.progress * 3);
-
-            ctx.strokeStyle = `rgba(0,229,255,${alpha * 0.12})`;
-            ctx.lineWidth = 4;
-            ctx.shadowColor = '#00e5ff';
-            ctx.shadowBlur = 8;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX, midY, x2, y2); ctx.stroke();
-
-            ctx.strokeStyle = `rgba(0,229,255,${alpha * 0.8})`;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX, midY, x2, y2); ctx.stroke();
-            ctx.shadowBlur = 0;
-
-            if (c.progress <= 1) {
-                const t = c.progress;
-                for (let tr = 0; tr < 5; tr++) {
-                    const tt = Math.max(0, t - tr * 0.025);
-                    const dx = (1 - tt) * (1 - tt) * x1 + 2 * (1 - tt) * tt * midX + tt * tt * x2;
-                    const dy = (1 - tt) * (1 - tt) * y1 + 2 * (1 - tt) * tt * midY + tt * tt * y2;
-                    ctx.fillStyle = tr === 0 ? '#ffffff' : `rgba(0,229,255,${(1 - tr / 5) * 0.5})`;
-                    if (tr === 0) { ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 12; }
-                    ctx.beginPath(); ctx.arc(dx, dy, tr === 0 ? 2.5 : 1.5, 0, Math.PI * 2); ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
-            }
-
-            if (alpha > 0.3) {
-                ctx.fillStyle = `rgba(0,229,255,${alpha * 0.5})`;
-                ctx.font = '8px monospace';
-                ctx.fillText(c.srcName, x1 + 5, y1 - 5);
-                ctx.fillText(c.dstName, x2 + 5, y2 - 5);
-            }
-        }
-
-        requestAnimationFrame(drawMap);
-    }
-
-    drawMap();
-
-    return function onMapConnection(data) {
-        const src = toXY(data.srcLng, data.srcLat);
-        const dst = toXY(data.dstLng, data.dstLat);
-        connections.push({ src, dst, srcName: data.srcName, dstName: data.dstName, progress: 0 });
-        for (const pt of [src, dst]) {
-            if (!cityDots.some(d => Math.hypot(d.x - pt[0], d.y - pt[1]) < 10)) {
-                cityDots.push({ x: pt[0], y: pt[1], age: 0, phase: Math.random() * Math.PI * 2 });
-            }
-        }
-        if (connections.length > 20) connections.shift();
+  start() {
+    if (this.running) return;
+    this.running = true;
+    const loop = (t) => {
+      if (!this.running) return;
+      this.draw(t);
+      requestAnimationFrame(loop);
     };
+    requestAnimationFrame(loop);
+  }
+
+  stop() {
+    this.running = false;
+  }
+
+  arcPath(ctx, a, b, progress) {
+    const [x1, y1] = this.project(a.lng, a.lat);
+    const [x2, y2] = this.project(b.lng, b.lat);
+    const mx = (x1 + x2) / 2;
+    const my = (y1 + y2) / 2 - Math.hypot(x2 - x1, y2 - y1) * 0.25;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    if (progress >= 1) {
+      ctx.quadraticCurveTo(mx, my, x2, y2);
+    } else {
+      // Walk the quadratic bezier up to `progress`.
+      let px = x1;
+      let py = y1;
+      const steps = 24;
+      for (let i = 1; i <= steps * progress; i++) {
+        const t = i / steps;
+        px = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * mx + t * t * x2;
+        py = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * my + t * t * y2;
+        ctx.lineTo(px, py);
+      }
+    }
+    ctx.stroke();
+  }
+
+  draw(t) {
+    const ctx = this.ctx;
+    const { width: w, height: h } = this.canvas;
+    ctx.clearRect(0, 0, w, h);
+    if (this.base) ctx.drawImage(this.base, 0, 0);
+    if (this.alarm) {
+      ctx.fillStyle = 'rgba(255, 45, 85, 0.06)';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    const accent = this.alarm ? 'rgba(255, 45, 85,' : 'rgba(255, 212, 0,';
+    const fontPx = Math.max(9, Math.round(w / 70));
+    ctx.font = `${fontPx}px "Share Tech Mono", monospace`;
+
+    for (let i = 0; i < this.revealed; i++) {
+      const isLatest = i === this.revealed - 1;
+      const progress = isLatest && this.revealStart
+        ? Math.min(1, (t - this.revealStart) / 600)
+        : 1;
+      ctx.strokeStyle = `${accent} 0.85)`;
+      ctx.lineWidth = Math.max(1.2, w / 700);
+      ctx.shadowColor = `${accent} 1)`;
+      ctx.shadowBlur = 8;
+      this.arcPath(ctx, this.route[i], this.route[i + 1], progress);
+      ctx.shadowBlur = 0;
+    }
+
+    // Nodes + labels for every endpoint that is lit.
+    const pulse = 0.5 + 0.5 * Math.sin(t / 300);
+    for (let i = 0; i <= this.revealed && i < this.route.length; i++) {
+      const c = this.route[i];
+      const [x, y] = this.project(c.lng, c.lat);
+      const isTarget = i === this.route.length - 1;
+      const r = isTarget ? 3 + pulse * 4 : 2.5;
+      ctx.fillStyle = isTarget ? `${accent} 0.95)` : 'rgba(57, 255, 20, 0.9)';
+      ctx.beginPath();
+      ctx.arc(x, y, r * (w / 600), 0, Math.PI * 2);
+      ctx.fill();
+      if (isTarget && this.revealed >= this.route.length - 1) {
+        ctx.strokeStyle = `${accent} ${0.7 - pulse * 0.5})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, (6 + pulse * 10) * (w / 600), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = isTarget ? `${accent} 0.9)` : 'rgba(57, 255, 20, 0.65)';
+      const label = isTarget ? `▸ ${c.name}` : c.name;
+      ctx.fillText(label, Math.min(x + 6, w - 80), Math.max(y - 6, fontPx));
+    }
+  }
+
+  destroy() {
+    this.stop();
+    window.removeEventListener('resize', this._resize);
+  }
 }
