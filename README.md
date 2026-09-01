@@ -25,6 +25,18 @@ PORT=3001 go run . # any port you like
 
 One Go binary, all assets embedded, no runtime dependencies, no database, no analytics, no network calls except serving itself.
 
+## Deploying
+
+The production site deploys the `static` directory directly to Vercel. Import this repository in the Vercel dashboard and keep the detected framework preset as **Other**; `vercel.json` sets the output directory and production security headers. No build command or environment variables are required.
+
+`htp.kastro.is` is served through BunnyCDN. After the first Vercel deployment:
+
+1. Add `htp.kastro.is` to the Vercel project.
+2. Change the BunnyCDN pull-zone origin from Coolify to the Vercel deployment hostname.
+3. Purge the BunnyCDN cache and verify `/`, `/.well-known/security.txt`, and `/healthz` before removing the Coolify service.
+
+The Go server remains available for local development and self-hosting.
+
 ## Stack
 
 - **Server:** Go standard library only (`embed` + `net/http`), ~100 lines.
