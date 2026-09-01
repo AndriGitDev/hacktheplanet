@@ -11,6 +11,8 @@ import (
 func TestEmbeddedAssets(t *testing.T) {
 	required := []string{
 		"static/index.html",
+		"static/healthz",
+		"static/.well-known/security.txt",
 		"static/css/style.css",
 		"static/js/main.js",
 		"static/js/data.js",
